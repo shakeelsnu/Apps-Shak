@@ -3,115 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Book - Multi-User Ledger</title>
+    <title>Shop Book - Adaptive Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .nav-active { color: #2563eb; }
-        .nav-inactive { color: #9ca3af; }
-        .auth-card { animation: slideUp 0.4s ease-out; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .admin-glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Responsive Container */
+        .app-shell {
+            margin-left: auto;
+            margin-right: auto;
+            background-color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Force Mobile View on Desktop */
+        .forced-mobile {
+            max-width: 420px !important;
+            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        /* Default PC Web View */
+        @media (min-width: 1024px) {
+            .app-shell:not(.forced-mobile) {
+                max-width: 100%;
+            }
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+            }
+            .list-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 1rem;
+            }
+        }
+
+        .nav-active { color: #2563eb; position: relative; }
+        .nav-active::after { content: ''; position: absolute; top: 0; left: 25%; width: 50%; height: 3px; background: #2563eb; border-radius: 0 0 4px 4px; }
+        
+        .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
-<body class="max-w-md mx-auto bg-white min-h-screen flex flex-col relative shadow-2xl">
+<body class="bg-slate-50">
 
-    <!-- Auth Overlay (Login / Signup) -->
-    <div id="auth-overlay" class="fixed inset-0 bg-blue-600 z-[200] flex items-center justify-center p-6 hidden">
-        <div class="bg-white rounded-2xl p-8 w-full shadow-xl auth-card">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Shop Book</h2>
-            <p class="text-sm text-gray-500 mb-6">Enter your nickname (max 10 chars) and password to begin.</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase">Nickname</label>
-                    <input id="auth-username" maxlength="10" type="text" placeholder="e.g. Shop123" class="w-full border-b-2 border-gray-100 p-2 outline-none focus:border-blue-500 transition-colors">
+    <div id="app-root" class="app-shell shadow-sm">
+        
+        <!-- Auth Screen -->
+        <div id="auth-screen" class="fixed inset-0 bg-blue-600 z-[200] flex items-center justify-center p-6 hidden">
+            <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+                <div class="flex flex-col items-center mb-8">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-black text-gray-900">Shop Book</h2>
+                    <p class="text-sm text-slate-500">Sign in to manage your business</p>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase">Password</label>
-                    <input id="auth-password" type="password" placeholder="••••••••" class="w-full border-b-2 border-gray-100 p-2 outline-none focus:border-blue-500 transition-colors">
+                
+                <div class="space-y-5">
+                    <input id="auth-user" type="text" placeholder="Nickname" class="w-full bg-slate-50 border-2 border-transparent p-4 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold">
+                    <input id="auth-pass" type="password" placeholder="Password" class="w-full bg-slate-50 border-2 border-transparent p-4 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold">
+                    <button onclick="doAuth()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">
+                        Enter Ledger
+                    </button>
+                    <p id="auth-msg" class="text-red-500 text-xs text-center font-bold hidden"></p>
                 </div>
-                <button onclick="handleAuth()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all">
-                    Login / Create Account
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header id="main-header" class="bg-blue-600 text-white p-5 lg:px-10 sticky top-0 z-50 shadow-lg">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="hidden lg:flex w-10 h-10 bg-white/20 rounded-xl items-center justify-center">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 id="view-name" class="text-xl lg:text-2xl font-black">Shop Book</h1>
+                            <span id="admin-tag" class="hidden bg-yellow-400 text-yellow-900 text-[10px] px-2 py-0.5 rounded-lg font-black uppercase">Admin</span>
+                        </div>
+                        <p id="user-status" class="text-[10px] lg:text-xs font-bold opacity-70">Connecting...</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <select id="curr-switch" onchange="changeCurrency()" class="bg-white/10 hover:bg-white/20 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer transition-colors">
+                        <option value="LKR" class="text-gray-900">LKR (Rs)</option>
+                        <option value="USD" class="text-gray-900">USD ($)</option>
+                        <option value="INR" class="text-gray-900">INR (₹)</option>
+                    </select>
+                    <button onclick="exitApp()" class="p-2 bg-white/10 hover:bg-red-500 rounded-xl transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Admin Control Panel -->
+        <div id="admin-panel" class="hidden bg-yellow-50 border-b border-yellow-200 p-5">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-black text-yellow-700 uppercase tracking-widest">Global User Directory</h3>
+                    <button onclick="location.reload()" class="bg-yellow-200 text-yellow-800 text-[10px] px-4 py-1.5 rounded-full font-bold">Refresh Registry</button>
+                </div>
+                <div id="user-registry" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            </div>
+        </div>
+
+        <!-- App Main Content -->
+        <main id="view-content" class="flex-1 p-5 lg:p-10 mb-24 overflow-y-auto max-w-7xl mx-auto w-full">
+            <div class="animate-pulse flex flex-col gap-6">
+                <div class="h-40 bg-slate-100 rounded-3xl"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="h-24 bg-slate-100 rounded-2xl"></div>
+                    <div class="h-24 bg-slate-100 rounded-2xl"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Navbar -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-50">
+            <div class="max-w-7xl mx-auto flex justify-around">
+                <button onclick="go('dashboard')" class="nav-btn flex-1 py-5 flex flex-col items-center gap-1 nav-active" data-id="dashboard">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">Home</span>
                 </button>
-                <p id="auth-error" class="text-red-500 text-xs text-center hidden"></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header id="app-header" class="bg-blue-600 text-white p-4 sticky top-0 z-50 transition-colors duration-500">
-        <div class="flex justify-between items-center">
-            <div>
-                <div class="flex items-center gap-2">
-                    <h1 id="view-title" class="text-xl font-bold">Shop Book</h1>
-                    <span id="admin-badge" class="hidden bg-yellow-400 text-yellow-900 text-[10px] px-2 py-0.5 rounded-full font-black uppercase animate-pulse">Admin</span>
-                </div>
-                <p id="auth-status" class="text-[10px] opacity-80">Loading...</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <select id="currency-select" onchange="updateCurrency()" class="bg-blue-700 text-xs rounded px-2 py-1 border-none outline-none">
-                    <option value="LKR">LKR (Rs)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="INR">INR (₹)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                </select>
-                <button onclick="logout()" title="Logout" class="p-1 hover:bg-blue-500 rounded transition-colors text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
+                <button onclick="go('sales')" class="nav-btn flex-1 py-5 flex flex-col items-center gap-1 nav-inactive" data-id="sales">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">Sales</span>
+                </button>
+                <button onclick="go('customers')" class="nav-btn flex-1 py-5 flex flex-col items-center gap-1 nav-inactive" data-id="customers">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">Credit</span>
+                </button>
+                <button onclick="go('inventory')" class="nav-btn flex-1 py-5 flex flex-col items-center gap-1 nav-inactive" data-id="inventory">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <span class="text-[10px] font-black uppercase tracking-tighter">Stock</span>
                 </button>
             </div>
+        </nav>
+
+        <!-- Hidden Components -->
+        <input type="file" id="import-trigger" class="hidden" accept=".json" onchange="runImport(event)">
+        <div id="modal-base" class="fixed inset-0 bg-black/60 z-[150] hidden flex items-center justify-center p-4 backdrop-blur-md">
+            <div id="modal-box" class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl"></div>
         </div>
-    </header>
 
-    <!-- Admin Tools Section -->
-    <div id="admin-tools" class="hidden bg-yellow-50 p-4 border-b border-yellow-200">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-xs font-black text-yellow-700 uppercase">User Directory</h3>
-            <button onclick="window.location.reload()" class="text-[10px] bg-yellow-200 px-2 py-1 rounded text-yellow-800 font-bold">Refresh List</button>
-        </div>
-        <div id="admin-user-list" class="space-y-2 max-h-48 overflow-y-auto">
-            <p class="text-xs text-gray-400 italic">Fetching users...</p>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main id="app-content" class="flex-1 p-4 mb-20 overflow-y-auto">
-        <div class="animate-pulse space-y-4">
-            <div class="h-24 bg-gray-100 rounded-xl"></div>
-            <div class="h-24 bg-gray-100 rounded-xl"></div>
-        </div>
-    </main>
-
-    <!-- Hidden File Input for Upload -->
-    <input type="file" id="import-file" class="hidden" accept=".json" onchange="handleFileImport(event)">
-
-    <!-- Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex justify-around p-3 z-50">
-        <button onclick="switchView('dashboard')" class="nav-btn flex flex-col items-center nav-active" data-view="dashboard">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-            <span class="text-[10px]">Home</span>
-        </button>
-        <button onclick="switchView('sales')" class="nav-btn flex flex-col items-center nav-inactive" data-view="sales">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z" /></svg>
-            <span class="text-[10px]">Sales</span>
-        </button>
-        <button onclick="switchView('customers')" class="nav-btn flex flex-col items-center nav-inactive" data-view="customers">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z" /></svg>
-            <span class="text-[10px]">Credit</span>
-        </button>
-        <button onclick="switchView('inventory')" class="nav-btn flex flex-col items-center nav-inactive" data-view="inventory">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
-            <span class="text-[10px]">Stock</span>
-        </button>
-    </nav>
-
-    <!-- Modal -->
-    <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center p-4">
-        <div id="modal-content" class="bg-white rounded-xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto"></div>
     </div>
 
     <script type="module">
@@ -119,460 +170,343 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const currencySymbols = { LKR: 'Rs', USD: '$', INR: '₹', EUR: '€', GBP: '£' };
+        const symbols = { LKR: 'Rs', USD: '$', INR: '₹' };
 
         window.state = {
             sales: [],
             customers: [],
             inventory: [],
-            settings: { currency: 'LKR' },
-            currentView: 'dashboard',
+            view: 'dashboard',
+            pref: { currency: 'LKR', isMobile: localStorage.getItem('mode_mobile') === 'true' },
             user: null,
-            profile: null,
-            isAdmin: false,
-            adminTargetUid: null
+            admin: false,
+            targetUid: null
         };
 
         let db, auth, appId;
 
-        const initApp = async () => {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            const app = initializeApp(firebaseConfig);
+        const boot = async () => {
+            const config = JSON.parse(__firebase_config);
+            const app = initializeApp(config);
             auth = getAuth(app);
             db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'shop-book-v2';
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'sb-v4';
+
+            if (window.state.pref.isMobile) document.getElementById('app-root').classList.add('forced-mobile');
 
             onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    showAuthScreen();
-                    return;
-                }
-                
+                if (!user) { showLogin(); return; }
                 window.state.user = user;
                 
-                // If the user already has admin session flag in state or localStorage
-                if (window.state.isAdmin) {
-                    await loadAdminView();
-                    return;
-                }
+                if (window.state.admin) { await startAdmin(); return; }
 
-                // Normal User Path
-                const profileDoc = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'));
-                if (profileDoc.exists()) {
-                    window.state.profile = profileDoc.data();
-                    document.getElementById('auth-overlay').classList.add('hidden');
-                    setupListeners(user.uid);
-                } else {
-                    // This handles cases where auth is active but profile is missing
-                    showAuthScreen();
-                }
+                const p = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'));
+                if (p.exists()) {
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    startSync(user.uid);
+                } else { showLogin(); }
             });
 
-            const session = localStorage.getItem('sb_session');
-            if (session) {
-                const { userIn, passIn } = JSON.parse(session);
-                if (userIn === '9332' && passIn === '9332#') {
-                    window.state.isAdmin = true;
-                }
-                autoPerformAuth();
-            } else {
-                showAuthScreen();
-            }
+            const sess = localStorage.getItem('sb_sess');
+            if (sess) {
+                const { u, p } = JSON.parse(sess);
+                if (u === '9332' && p === '9332#') window.state.admin = true;
+                await (typeof __initial_auth_token !== 'undefined' ? signInWithCustomToken(auth, __initial_auth_token) : signInAnonymously(auth));
+            } else { showLogin(); }
         };
 
-        const autoPerformAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
+        function showLogin() { document.getElementById('auth-screen').classList.remove('hidden'); }
 
-        function showAuthScreen() {
-            document.getElementById('auth-overlay').classList.remove('hidden');
-        }
+        window.doAuth = async () => {
+            const u = document.getElementById('auth-user').value.trim();
+            const p = document.getElementById('auth-pass').value.trim();
+            if (!u || !p) return;
 
-        window.handleAuth = async () => {
-            const userIn = document.getElementById('auth-username').value.trim();
-            const passIn = document.getElementById('auth-password').value.trim();
-            const errorEl = document.getElementById('auth-error');
-
-            if (!userIn || !passIn) {
-                errorEl.innerText = "Nickname and Password are required.";
-                errorEl.classList.remove('hidden');
+            if (u === '9332' && p === '9332#') {
+                window.state.admin = true;
+                localStorage.setItem('sb_sess', JSON.stringify({u, p}));
+                await (typeof __initial_auth_token !== 'undefined' ? signInWithCustomToken(auth, __initial_auth_token) : signInAnonymously(auth));
                 return;
             }
 
-            // ADMIN LOGIN CHECK
-            if (userIn === '9332' && passIn === '9332#') {
-                window.state.isAdmin = true;
-                localStorage.setItem('sb_session', JSON.stringify({userIn, passIn}));
-                await autoPerformAuth();
-                document.getElementById('auth-overlay').classList.add('hidden');
-                // loadAdminView will be triggered by onAuthStateChanged
-                return;
-            }
-
-            // USER LOGIN/SIGNUP
-            await autoPerformAuth();
+            await (typeof __initial_auth_token !== 'undefined' ? signInWithCustomToken(auth, __initial_auth_token) : signInAnonymously(auth));
             const uid = auth.currentUser.uid;
-            const profRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
-            const snap = await getDoc(profRef);
+            const ref = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
+            const snap = await getDoc(ref);
 
-            if (snap.exists()) {
-                const data = snap.data();
-                if (data.password === passIn) {
-                    window.state.profile = data;
-                    localStorage.setItem('sb_session', JSON.stringify({userIn, passIn}));
-                    document.getElementById('auth-overlay').classList.add('hidden');
-                    setupListeners(uid);
-                } else {
-                    errorEl.innerText = "Wrong password for this nickname.";
-                    errorEl.classList.remove('hidden');
-                }
-            } else {
-                const newProfile = { nickname: userIn.substring(0, 10), password: passIn, createdAt: new Date().toISOString() };
-                await setDoc(profRef, newProfile);
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registry', uid), { nickname: userIn, uid: uid });
-                
-                window.state.profile = newProfile;
-                localStorage.setItem('sb_session', JSON.stringify({userIn, passIn}));
-                document.getElementById('auth-overlay').classList.add('hidden');
-                setupListeners(uid);
+            if (snap.exists() && snap.data().password !== p) {
+                document.getElementById('auth-msg').innerText = "Incorrect password";
+                document.getElementById('auth-msg').classList.remove('hidden');
+                return;
             }
+
+            if (!snap.exists()) {
+                await setDoc(ref, { nickname: u, password: p });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registry', uid), { nickname: u, uid: uid });
+            }
+            
+            localStorage.setItem('sb_sess', JSON.stringify({u, p}));
+            document.getElementById('auth-screen').classList.add('hidden');
+            startSync(uid);
         };
 
-        window.logout = async () => {
-            localStorage.removeItem('sb_session');
+        window.toggleMobileView = () => {
+            const el = document.getElementById('app-root');
+            const active = el.classList.toggle('forced-mobile');
+            window.state.pref.isMobile = active;
+            localStorage.setItem('mode_mobile', active);
+            draw();
+        };
+
+        window.exitApp = async () => {
+            localStorage.removeItem('sb_sess');
             await signOut(auth);
-            window.location.reload();
+            location.reload();
         };
 
-        async function loadAdminView() {
-            // Visual indicators for Admin
-            document.getElementById('admin-tools').classList.remove('hidden');
-            document.getElementById('admin-badge').classList.remove('hidden');
-            document.getElementById('app-header').classList.replace('bg-blue-600', 'bg-gray-800');
-            document.getElementById('auth-status').innerText = "SYSTEM ADMINISTRATOR";
+        async function startAdmin() {
+            document.getElementById('admin-panel').classList.remove('hidden');
+            document.getElementById('admin-tag').classList.remove('hidden');
+            document.getElementById('main-header').classList.replace('bg-blue-600', 'bg-slate-900');
+            document.getElementById('user-status').innerText = "ROOT ADMINISTRATOR";
 
-            try {
-                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'registry'));
-                const listEl = document.getElementById('admin-user-list');
-                
-                if (snap.empty) {
-                    listEl.innerHTML = `<p class="text-xs text-gray-500 py-4">No users registered yet.</p>`;
-                } else {
-                    listEl.innerHTML = snap.docs.map(d => {
-                        const u = d.data();
-                        const isCurrent = window.state.adminTargetUid === u.uid;
-                        return `<div class="flex justify-between items-center bg-white p-2 rounded shadow-sm text-xs border ${isCurrent ? 'border-yellow-500 ring-1 ring-yellow-400' : ''}">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-gray-800">${u.nickname}</span>
-                                <span class="text-[9px] text-gray-400 font-mono">${u.uid.substring(0, 8)}...</span>
-                            </div>
-                            <button onclick="adminInspect('${u.uid}')" class="${isCurrent ? 'bg-yellow-500' : 'bg-blue-600'} text-white px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition-all">
-                                ${isCurrent ? 'Inspecting' : 'Inspect'}
-                            </button>
-                        </div>`;
-                    }).join('');
-                }
-            } catch (err) {
-                console.error("Admin fetch error:", err);
-            }
-            refreshUI();
+            const reg = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'registry'));
+            document.getElementById('user-registry').innerHTML = reg.docs.map(d => {
+                const u = d.data();
+                const sel = window.state.targetUid === u.uid;
+                return `<button onclick="inspect('${u.uid}')" class="p-4 rounded-2xl border-2 flex justify-between items-center transition-all ${sel ? 'border-yellow-400 bg-white' : 'border-transparent bg-white shadow-sm'}">
+                    <span class="font-bold text-gray-800">${u.nickname}</span>
+                    <span class="text-[10px] font-black ${sel ? 'text-yellow-600' : 'text-blue-600'}">${sel ? 'VIEWING' : 'INSPECT'}</span>
+                </button>`;
+            }).join('');
+            draw();
         }
 
-        window.adminInspect = (uid) => {
-            window.state.adminTargetUid = uid;
-            setupListeners(uid);
-            loadAdminView(); // Refresh list to show highlight
+        window.inspect = (uid) => {
+            window.state.targetUid = uid;
+            startSync(uid);
+            startAdmin();
         };
 
-        function setupListeners(uid) {
-            const statusEl = document.getElementById('auth-status');
-            if (window.state.isAdmin) {
-                statusEl.innerText = `ADMIN: Viewing User ID ${uid.substring(0,8)}`;
-            } else {
-                statusEl.innerText = `Hello, ${window.state.profile?.nickname || 'User'}`;
-            }
-
-            // Sync Currency
-            onSnapshot(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), (snapshot) => {
-                if (snapshot.exists()) {
-                    window.state.settings = snapshot.data();
-                    const select = document.getElementById('currency-select');
-                    if (select) select.value = window.state.settings.currency || 'LKR';
+        function startSync(uid) {
+            document.getElementById('user-status').innerText = `Syncing: ${uid.substring(0,8)}...`;
+            onSnapshot(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), (s) => {
+                if(s.exists()) {
+                    window.state.pref.currency = s.data().currency;
+                    document.getElementById('curr-switch').value = s.data().currency;
                 }
-                refreshUI();
-            }, (err) => console.log("Prefs Listen Error:", err));
-
-            // Sync Collections
-            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'sales'), (snap) => {
-                window.state.sales = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                refreshUI();
-            }, (err) => console.log("Sales Listen Error:", err));
-
-            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'customers'), (snap) => {
-                window.state.customers = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                refreshUI();
-            }, (err) => console.log("Customers Listen Error:", err));
-
-            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), (snap) => {
-                window.state.inventory = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                refreshUI();
-            }, (err) => console.log("Inventory Listen Error:", err));
+                draw();
+            });
+            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'sales'), (s) => { window.state.sales = s.docs.map(d => ({id:d.id, ...d.data()})); draw(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'customers'), (s) => { window.state.customers = s.docs.map(d => ({id:d.id, ...d.data()})); draw(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), (s) => { window.state.inventory = s.docs.map(d => ({id:d.id, ...d.data()})); draw(); });
         }
 
-        window.switchView = (view) => {
-            window.state.currentView = view;
-            refreshUI();
-        };
+        window.go = (v) => { window.state.view = v; draw(); };
 
-        const getActiveUid = () => window.state.adminTargetUid || window.state.user?.uid;
+        const getUid = () => window.state.targetUid || window.state.user?.uid;
 
-        window.updateCurrency = async () => {
-            const select = document.getElementById('currency-select');
-            const val = select.value;
-            window.state.settings.currency = val;
-            refreshUI();
-            const uid = getActiveUid();
-            if (uid) {
-                await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), { currency: val });
-            }
-        };
+        function draw() {
+            const out = document.getElementById('view-content');
+            const sym = symbols[window.state.pref.currency] || 'Rs';
 
-        function refreshUI() {
-            const container = document.getElementById('app-content');
-            const title = document.getElementById('view-title');
-            if (!container || !title) return;
-
-            const symbol = currencySymbols[window.state.settings.currency] || 'Rs';
-
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const isActive = btn.dataset.view === window.state.currentView;
-                btn.classList.toggle('nav-active', isActive);
-                btn.classList.toggle('nav-inactive', !isActive);
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                const active = b.dataset.id === window.state.view;
+                b.className = `nav-btn flex-1 py-5 flex flex-col items-center gap-1 transition-all ${active ? 'nav-active' : 'nav-inactive'}`;
             });
 
-            if (window.state.currentView === 'dashboard') {
-                title.innerText = "Dashboard";
+            if (window.state.view === 'dashboard') {
                 const today = new Date().toLocaleDateString();
-                const todaySales = window.state.sales
-                    .filter(s => new Date(s.date).toLocaleDateString() === today)
-                    .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-                const totalCredit = window.state.customers.reduce((acc, curr) => acc + (parseFloat(curr.balance) || 0), 0);
+                const daySales = window.state.sales.filter(s => new Date(s.date).toLocaleDateString() === today).reduce((a,c) => a + (parseFloat(c.amount)||0), 0);
+                const debt = window.state.customers.reduce((a,c) => a + (parseFloat(c.balance)||0), 0);
 
-                container.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
-                            <p class="text-[10px] text-blue-600 font-bold uppercase">Today's Sales</p>
-                            <p class="text-xl font-black text-blue-900">${symbol} ${todaySales.toLocaleString()}</p>
-                        </div>
-                        <div class="bg-red-50 p-4 rounded-xl border border-red-100 shadow-sm">
-                            <p class="text-[10px] text-red-600 font-bold uppercase">Total Debt</p>
-                            <p class="text-xl font-black text-red-900">${symbol} ${totalCredit.toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mb-6">
-                        <button onclick="openModal('addSale')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50 transition-all">
-                            <div class="text-green-500 mb-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"/></svg></div>
-                            <span class="text-[9px] font-bold">New Sale</span>
-                        </button>
-                        <button onclick="openModal('addCustomer')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50 transition-all">
-                            <div class="text-blue-500 mb-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></div>
-                            <span class="text-[9px] font-bold">Customer</span>
-                        </button>
-                        <button onclick="openModal('addStock')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50 transition-all">
-                            <div class="text-purple-500 mb-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
-                            <span class="text-[9px] font-bold">Stock</span>
-                        </button>
-                    </div>
-                    <div class="flex justify-between items-center mb-2 bg-white p-3 border rounded-xl shadow-sm">
-                         <div>
-                            <h3 class="font-bold text-sm text-gray-800">Backup & Restore</h3>
-                            <p class="text-[9px] text-gray-400">Save or upload your ledger data</p>
-                         </div>
-                         <div class="flex gap-2">
-                             <button onclick="triggerImport()" class="bg-gray-100 hover:bg-gray-200 text-[10px] text-gray-700 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Upload
-                             </button>
-                             <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 text-[10px] text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download
-                             </button>
-                         </div>
-                    </div>
-                    <h3 class="font-bold text-sm text-gray-500 mt-6 mb-2">Recent Sales</h3>
-                    <div class="space-y-2">
-                        ${window.state.sales.slice(-5).reverse().map(s => `
-                            <div class="flex justify-between p-3 bg-white border rounded-lg shadow-sm">
-                                <div><p class="text-sm font-bold">${s.item}</p><p class="text-[10px] text-gray-400">${new Date(s.date).toLocaleTimeString()}</p></div>
-                                <p class="font-bold text-green-600">${symbol} ${parseFloat(s.amount).toFixed(2)}</p>
+                out.innerHTML = `
+                    <div class="dashboard-grid mb-8">
+                        <div class="bg-blue-600 p-8 rounded-[2rem] text-white shadow-xl shadow-blue-100 relative overflow-hidden">
+                            <div class="relative z-10">
+                                <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Today's Revenue</p>
+                                <h2 class="text-4xl font-black">${sym} ${daySales.toLocaleString()}</h2>
                             </div>
-                        `).join('') || '<p class="text-center text-xs text-gray-400 py-6">No sales recorded yet</p>'}
+                            <div class="absolute -right-4 -bottom-4 opacity-10"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg></div>
+                        </div>
+                        <div class="bg-rose-500 p-8 rounded-[2rem] text-white shadow-xl shadow-rose-100 relative overflow-hidden">
+                            <div class="relative z-10">
+                                <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Total Owed</p>
+                                <h2 class="text-4xl font-black">${sym} ${debt.toLocaleString()}</h2>
+                            </div>
+                            <div class="absolute -right-4 -bottom-4 opacity-10"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></div>
+                        </div>
+                        <div class="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl shadow-slate-200 flex flex-col justify-center">
+                            <h3 class="font-black text-lg mb-1">Utility Center</h3>
+                            <div class="flex gap-2">
+                                <button onclick="triggerIn()" class="flex-1 bg-white/10 p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Import</button>
+                                <button onclick="doExport()" class="flex-1 bg-blue-500 p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all">Export</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                        <button onclick="pop('addSale')" class="bg-white p-6 rounded-3xl border border-slate-100 card-hover flex flex-col items-center group">
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-emerald-500 group-hover:text-white transition-all"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 6v12m6-6H6"/></svg></div>
+                            <span class="font-black text-xs text-slate-700">Sale</span>
+                        </button>
+                        <button onclick="pop('addCust')" class="bg-white p-6 rounded-3xl border border-slate-100 card-hover flex flex-col items-center group">
+                            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-blue-500 group-hover:text-white transition-all"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg></div>
+                            <span class="font-black text-xs text-slate-700">Credit</span>
+                        </button>
+                        <button onclick="pop('addInv')" class="bg-white p-6 rounded-3xl border border-slate-100 card-hover flex flex-col items-center group">
+                            <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-purple-500 group-hover:text-white transition-all"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
+                            <span class="font-black text-xs text-slate-700">Inventory</span>
+                        </button>
+                        <button onclick="toggleMobileView()" class="bg-white p-6 rounded-3xl border border-slate-100 card-hover flex flex-col items-center group ${window.state.pref.isMobile ? 'ring-2 ring-blue-500' : ''}">
+                            <div class="w-12 h-12 ${window.state.pref.isMobile ? 'bg-blue-500 text-white' : 'bg-slate-50 text-slate-400'} rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-all"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+                            <span class="font-black text-xs text-slate-700">${window.state.pref.isMobile ? 'Full View' : 'Mobile View'}</span>
+                        </button>
+                    </div>
+
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Recent Sales Activity</h3>
+                    <div class="list-grid">
+                        ${window.state.sales.slice(-10).reverse().map(s => `
+                            <div class="bg-white p-5 rounded-3xl border border-slate-100 flex justify-between items-center card-hover">
+                                <div><h4 class="font-black text-slate-800">${s.item}</h4><p class="text-[10px] font-bold text-slate-400">${new Date(s.date).toLocaleTimeString()}</p></div>
+                                <p class="text-lg font-black text-blue-600">${sym} ${parseFloat(s.amount).toLocaleString()}</p>
+                            </div>
+                        `).join('') || '<p class="text-slate-400 py-10 text-center font-bold">No entries found</p>'}
                     </div>
                 `;
-            } else if (window.state.currentView === 'sales') {
-                title.innerText = "Sales History";
-                container.innerHTML = `<div class="space-y-2">${window.state.sales.slice().reverse().map(s => `
-                    <div class="flex justify-between items-center p-4 bg-white border rounded-xl shadow-sm">
-                        <div><p class="font-bold text-gray-800">${s.item}</p><p class="text-xs text-gray-400">${new Date(s.date).toLocaleDateString()} at ${new Date(s.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div>
+            } else if (window.state.view === 'sales') {
+                out.innerHTML = `<div class="list-grid">${window.state.sales.slice().reverse().map(s => `
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 flex justify-between items-center card-hover">
+                        <div><h4 class="font-black text-slate-800">${s.item}</h4><p class="text-xs font-bold text-slate-400">${new Date(s.date).toLocaleDateString()}</p></div>
                         <div class="text-right">
-                            <p class="font-bold text-blue-600">${symbol} ${parseFloat(s.amount).toFixed(2)}</p>
-                            <button onclick="deleteDocHandler('sales', '${s.id}')" class="text-[10px] text-red-400 uppercase font-bold hover:text-red-600 transition-colors">Delete</button>
+                            <p class="text-xl font-black text-blue-600">${sym} ${parseFloat(s.amount).toLocaleString()}</p>
+                            <button onclick="delDoc('sales', '${s.id}')" class="text-[9px] font-black text-rose-400 uppercase tracking-widest mt-1">Delete Record</button>
                         </div>
-                    </div>
-                `).join('') || '<p class="text-center text-gray-400 py-10">No records found</p>'}</div>`;
-            } else if (window.state.currentView === 'customers') {
-                title.innerText = "Credit Ledger";
-                container.innerHTML = `<div class="space-y-2">${window.state.customers.map(c => `
-                    <div class="flex justify-between items-center p-4 bg-white border rounded-xl shadow-sm">
-                        <div><p class="font-bold text-gray-800">${c.name}</p><p class="text-xs text-gray-400">${c.phone || 'No phone'}</p></div>
-                        <div class="text-right">
-                            <p class="font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-600'}">${symbol} ${Math.abs(c.balance).toFixed(2)}</p>
-                            <div class="flex gap-1 mt-1 justify-end">
-                                <button onclick="adjustBalance('${c.id}', ${c.balance}, -1)" class="px-2 py-1 bg-green-50 text-green-600 text-[10px] rounded-md border border-green-200 font-bold hover:bg-green-100 transition-colors">Paid</button>
-                                <button onclick="adjustBalance('${c.id}', ${c.balance}, 1)" class="px-2 py-1 bg-red-50 text-red-600 text-[10px] rounded-md border border-red-200 font-bold hover:bg-red-100 transition-colors">Debt</button>
-                                <button onclick="deleteDocHandler('customers', '${c.id}')" class="px-2 py-1 bg-gray-50 text-gray-400 text-[10px] rounded-md border font-bold hover:bg-gray-100">×</button>
+                    </div>`).join('')}</div>`;
+            } else if (window.state.view === 'customers') {
+                out.innerHTML = `<div class="list-grid">${window.state.customers.map(c => `
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 card-hover">
+                        <div class="flex justify-between items-start mb-6">
+                            <div><h4 class="font-black text-slate-800 text-lg">${c.name}</h4><p class="text-xs font-bold text-slate-400">${c.phone || 'No phone'}</p></div>
+                            <div class="text-right">
+                                <p class="text-2xl font-black ${c.balance > 0 ? 'text-rose-500' : 'text-emerald-500'}">${sym} ${Math.abs(c.balance).toLocaleString()}</p>
+                                <span class="text-[8px] font-black uppercase tracking-widest opacity-50">${c.balance > 0 ? 'Debit Balance' : 'Account Clear'}</span>
                             </div>
                         </div>
-                    </div>
-                `).join('') || '<p class="text-center text-gray-400 py-10">No customer records</p>'}</div>`;
-            } else if (window.state.currentView === 'inventory') {
-                title.innerText = "Stock Inventory";
-                container.innerHTML = `<div class="space-y-2">${window.state.inventory.map(i => `
-                    <div class="flex justify-between items-center p-4 bg-white border rounded-xl shadow-sm">
+                        <div class="flex gap-2">
+                            <button onclick="editBal('${c.id}', ${c.balance}, -1)" class="flex-1 bg-emerald-50 text-emerald-600 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-emerald-100 active:scale-95 transition-all">Received</button>
+                            <button onclick="editBal('${c.id}', ${c.balance}, 1)" class="flex-1 bg-rose-50 text-rose-600 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-rose-100 active:scale-95 transition-all">Gave Credit</button>
+                            <button onclick="delDoc('customers', '${c.id}')" class="px-4 bg-slate-50 text-slate-400 rounded-2xl hover:text-rose-500 transition-colors">×</button>
+                        </div>
+                    </div>`).join('')}</div>`;
+            } else if (window.state.view === 'inventory') {
+                out.innerHTML = `<div class="list-grid">${window.state.inventory.map(i => `
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 flex justify-between items-center card-hover">
                         <div>
-                            <p class="font-bold text-gray-800">${i.name}</p>
-                            <p class="text-xs text-gray-400">Price: ${symbol} ${i.price}</p>
+                            <h4 class="font-black text-slate-800 text-lg">${i.name}</h4>
+                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-1">Price: ${sym} ${i.price}</p>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center bg-gray-50 rounded-lg p-1 border">
-                                <button onclick="adjustStock('${i.id}', ${i.qty}, -1)" class="w-8 h-8 hover:bg-white rounded flex items-center justify-center font-bold text-gray-600 transition-colors">-</button>
-                                <span class="font-bold w-10 text-center ${i.qty < 5 ? 'text-red-500 animate-pulse' : 'text-gray-800'}">${i.qty}</span>
-                                <button onclick="adjustStock('${i.id}', ${i.qty}, 1)" class="w-8 h-8 hover:bg-white rounded flex items-center justify-center font-bold text-gray-600 transition-colors">+</button>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center bg-slate-50 rounded-2xl p-1 border">
+                                <button onclick="editStock('${i.id}', ${i.qty}, -1)" class="w-10 h-10 flex items-center justify-center font-black text-slate-400">-</button>
+                                <span class="font-black text-lg w-10 text-center ${i.qty < 5 ? 'text-rose-500 animate-pulse' : 'text-slate-800'}">${i.qty}</span>
+                                <button onclick="editStock('${i.id}', ${i.qty}, 1)" class="w-10 h-10 flex items-center justify-center font-black text-slate-400">+</button>
                             </div>
-                            <button onclick="deleteDocHandler('inventory', '${i.id}')" class="text-gray-300 hover:text-red-500 transition-colors">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
-                            </button>
+                            <button onclick="delDoc('inventory', '${i.id}')" class="text-slate-200 hover:text-rose-400 transition-colors"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg></button>
                         </div>
-                    </div>
-                `).join('') || '<p class="text-center text-gray-400 py-10">No stock items</p>'}</div>`;
+                    </div>`).join('')}</div>`;
             }
         }
 
-        window.openModal = (type) => {
-            const overlay = document.getElementById('modal-overlay');
-            const content = document.getElementById('modal-content');
-            if (!overlay || !content) return;
-            overlay.classList.remove('hidden');
-            if(type === 'addSale') {
-                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Sale</h2><input id="m-item" placeholder="Item Name" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-amt" type="number" placeholder="Amount" class="w-full border p-2 mb-4 rounded outline-none focus:border-blue-500"><button onclick="saveNewSale()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">Add Sale</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
-            } else if(type === 'addCustomer') {
-                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Customer</h2><input id="m-name" placeholder="Full Name" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-bal" type="number" placeholder="Initial Debt (Optional)" class="w-full border p-2 mb-4 rounded outline-none focus:border-blue-500"><button onclick="saveNewCustomer()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">Save Customer</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
-            } else if(type === 'addStock') {
-                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">Add Stock</h2><input id="m-pname" placeholder="Item Name" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-price" type="number" placeholder="Selling Price" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-qty" type="number" placeholder="Initial Quantity" class="w-full border p-2 mb-4 rounded outline-none focus:border-blue-500"><button onclick="saveNewStock()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">Add to Inventory</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
-            }
+        window.pop = (t) => {
+            const m = document.getElementById('modal-base');
+            const c = document.getElementById('modal-box');
+            m.classList.remove('hidden');
+            const css = "w-full bg-slate-50 border-2 border-transparent p-4 mb-3 rounded-2xl outline-none focus:border-blue-500 transition-all font-bold";
+            const b = "w-full bg-blue-600 text-white p-4 rounded-2xl font-black shadow-lg shadow-blue-100 active:scale-95 transition-all";
+            
+            if(t==='addSale') c.innerHTML = `<h2 class="text-xl font-black mb-6">New Sale</h2><input id="p-item" placeholder="Product Name" class="${css}"><input id="p-amt" type="number" placeholder="Amount" class="${css}"><button onclick="saveSale()" class="${b}">Record Transaction</button>`;
+            else if(t==='addCust') c.innerHTML = `<h2 class="text-xl font-black mb-6">New Account</h2><input id="p-name" placeholder="Customer Name" class="${css}"><input id="p-bal" type="number" placeholder="Opening Balance (Optional)" class="${css}"><button onclick="saveCust()" class="${b}">Create Ledger</button>`;
+            else if(t==='addInv') c.innerHTML = `<h2 class="text-xl font-black mb-6">Inventory Entry</h2><input id="p-pname" placeholder="Item Name" class="${css}"><input id="p-price" type="number" placeholder="Sale Price" class="${css}"><input id="p-qty" type="number" placeholder="Quantity" class="${css}"><button onclick="saveInv()" class="${b}">Add Stock</button>`;
+            
+            c.innerHTML += `<button onclick="closePop()" class="w-full mt-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">Cancel</button>`;
         };
 
-        window.closeModal = () => document.getElementById('modal-overlay').classList.add('hidden');
+        window.closePop = () => document.getElementById('modal-base').classList.add('hidden');
 
-        window.saveNewSale = async () => {
-            const item = document.getElementById('m-item').value;
-            const amount = document.getElementById('m-amt').value;
-            const uid = getActiveUid();
-            if(!item || !amount || !uid) return;
-            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'sales'), { item, amount: parseFloat(amount), date: new Date().toISOString() });
-            closeModal();
+        window.saveSale = async () => {
+            const i = document.getElementById('p-item').value;
+            const a = document.getElementById('p-amt').value;
+            if(!i || !a) return;
+            await addDoc(collection(db, 'artifacts', appId, 'users', getUid(), 'sales'), { item:i, amount:parseFloat(a), date:new Date().toISOString() });
+            closePop();
         };
 
-        window.saveNewCustomer = async () => {
-            const name = document.getElementById('m-name').value;
-            const balance = document.getElementById('m-bal').value || 0;
-            const uid = getActiveUid();
-            if(!name || !uid) return;
-            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'customers'), { name, balance: parseFloat(balance), phone: '' });
-            closeModal();
+        window.saveCust = async () => {
+            const n = document.getElementById('p-name').value;
+            const b = document.getElementById('p-bal').value || 0;
+            if(!n) return;
+            await addDoc(collection(db, 'artifacts', appId, 'users', getUid(), 'customers'), { name:n, balance:parseFloat(b), phone:'' });
+            closePop();
         };
 
-        window.saveNewStock = async () => {
-            const name = document.getElementById('m-pname').value;
-            const price = document.getElementById('m-price').value;
-            const qty = document.getElementById('m-qty').value || 0;
-            const uid = getActiveUid();
-            if(!name || !uid) return;
-            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), { name, price: parseFloat(price), qty: parseInt(qty) });
-            closeModal();
+        window.saveInv = async () => {
+            const n = document.getElementById('p-pname').value;
+            const p = document.getElementById('p-price').value;
+            const q = document.getElementById('p-qty').value || 0;
+            if(!n) return;
+            await addDoc(collection(db, 'artifacts', appId, 'users', getUid(), 'inventory'), { name:n, price:parseFloat(p), qty:parseInt(q) });
+            closePop();
         };
 
-        window.adjustBalance = async (id, current, mult) => {
-            const amt = prompt("Amount:");
-            const uid = getActiveUid();
-            if(!amt || isNaN(amt) || !uid) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'users', uid, 'customers', id), { balance: current + (parseFloat(amt) * mult) });
+        window.editBal = async (id, cur, m) => {
+            const a = prompt("Amount:");
+            if(!a || isNaN(a)) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'users', getUid(), 'customers', id), { balance: cur + (parseFloat(a) * m) });
         };
 
-        window.adjustStock = async (id, current, change) => {
-            const uid = getActiveUid();
-            if(!uid) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', id), { qty: Math.max(0, current + change) });
+        window.editStock = async (id, cur, v) => {
+            await updateDoc(doc(db, 'artifacts', appId, 'users', getUid(), 'inventory', id), { qty: Math.max(0, cur + v) });
         };
 
-        window.deleteDocHandler = async (coll, id) => {
-            const uid = getActiveUid();
-            if(confirm("Permanently delete?") && uid) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, coll, id));
-            }
+        window.delDoc = async (c, id) => {
+            if(confirm("Permanently delete?")) await deleteDoc(doc(db, 'artifacts', appId, 'users', getUid(), c, id));
         };
 
-        window.exportData = () => {
-            const exportData = {
-                sales: window.state.sales,
-                customers: window.state.customers,
-                inventory: window.state.inventory,
-                settings: window.state.settings,
-                exportedAt: new Date().toISOString(),
-                nickname: window.state.profile?.nickname || 'unknown'
-            };
-            const name = window.state.profile?.nickname || 'admin_export';
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+        window.changeCurrency = async () => {
+            const v = document.getElementById('curr-switch').value;
+            window.state.pref.currency = v;
+            await setDoc(doc(db, 'artifacts', appId, 'users', getUid(), 'settings', 'prefs'), { currency: v });
+            draw();
+        };
+
+        window.doExport = () => {
+            const d = { sales:window.state.sales, customers:window.state.customers, inventory:window.state.inventory };
+            const blob = new Blob([JSON.stringify(d, null, 2)], {type:'application/json'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `backup_${name}_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `ShopBook_Backup_${new Date().toLocaleDateString()}.json`;
             a.click();
         };
 
-        window.triggerImport = () => {
-            document.getElementById('import-file').click();
-        };
-
-        window.handleFileImport = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    const uid = getActiveUid();
-                    if (!uid) throw new Error("User not authenticated");
-
-                    if (confirm("This will merge imported data with existing records. Continue?")) {
-                        const batch = writeBatch(db);
-                        if (data.sales) data.sales.forEach(s => batch.set(doc(collection(db, 'artifacts', appId, 'users', uid, 'sales')), { item: s.item, amount: s.amount, date: s.date }));
-                        if (data.customers) data.customers.forEach(c => batch.set(doc(collection(db, 'artifacts', appId, 'users', uid, 'customers')), { name: c.name, balance: c.balance, phone: c.phone || '' }));
-                        if (data.inventory) data.inventory.forEach(i => batch.set(doc(collection(db, 'artifacts', appId, 'users', uid, 'inventory')), { name: i.name, price: i.price, qty: i.qty }));
-                        await batch.commit();
-                        alert("Data imported successfully!");
-                        window.location.reload();
-                    }
-                } catch (err) {
-                    alert("Failed to import: " + err.message);
-                }
+        window.triggerIn = () => document.getElementById('import-trigger').click();
+        window.runImport = (e) => {
+            const f = e.target.files[0];
+            if(!f) return;
+            const r = new FileReader();
+            r.onload = async (ev) => {
+                const d = JSON.parse(ev.target.result);
+                const batch = writeBatch(db);
+                if(d.sales) d.sales.forEach(s => batch.set(doc(collection(db, 'artifacts', appId, 'users', getUid(), 'sales')), s));
+                if(d.customers) d.customers.forEach(c => batch.set(doc(collection(db, 'artifacts', appId, 'users', getUid(), 'customers')), c));
+                if(d.inventory) d.inventory.forEach(i => batch.set(doc(collection(db, 'artifacts', appId, 'users', getUid(), 'inventory')), i));
+                await batch.commit();
+                location.reload();
             };
-            reader.readAsText(file);
+            r.readAsText(f);
         };
 
-        initApp();
+        boot();
     </script>
 </body>
 </html>
