@@ -3,73 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Book - Multi-Currency Ledger</title>
+    <title>Shop Book - Multi-User Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .nav-active { color: #2563eb; }
         .nav-inactive { color: #9ca3af; }
-        .loading-shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
+        .auth-card { animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .admin-glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
     </style>
 </head>
 <body class="max-w-md mx-auto bg-white min-h-screen flex flex-col relative shadow-2xl">
 
+    <!-- Auth Overlay (Login / Signup) -->
+    <div id="auth-overlay" class="fixed inset-0 bg-blue-600 z-[200] flex items-center justify-center p-6 hidden">
+        <div class="bg-white rounded-2xl p-8 w-full shadow-xl auth-card">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Shop Book</h2>
+            <p class="text-sm text-gray-500 mb-6">Enter your nickname (max 10 chars) and password to begin.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Nickname</label>
+                    <input id="auth-username" maxlength="10" type="text" placeholder="e.g. Shop123" class="w-full border-b-2 border-gray-100 p-2 outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Password</label>
+                    <input id="auth-password" type="password" placeholder="••••••••" class="w-full border-b-2 border-gray-100 p-2 outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <button onclick="handleAuth()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all">
+                    Login / Create Account
+                </button>
+                <p id="auth-error" class="text-red-500 text-xs text-center hidden"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 sticky top-0 z-50">
+    <header id="app-header" class="bg-blue-600 text-white p-4 sticky top-0 z-50 transition-colors duration-500">
         <div class="flex justify-between items-center">
             <div>
-                <h1 id="view-title" class="text-xl font-bold">Shop Book</h1>
-                <p id="auth-status" class="text-[10px] opacity-80">Offline Mode</p>
+                <div class="flex items-center gap-2">
+                    <h1 id="view-title" class="text-xl font-bold">Shop Book</h1>
+                    <span id="admin-badge" class="hidden bg-yellow-400 text-yellow-900 text-[10px] px-2 py-0.5 rounded-full font-black uppercase animate-pulse">Admin</span>
+                </div>
+                <p id="auth-status" class="text-[10px] opacity-80">Loading...</p>
             </div>
             <div class="flex items-center gap-3">
                 <select id="currency-select" onchange="updateCurrency()" class="bg-blue-700 text-xs rounded px-2 py-1 border-none outline-none">
-                    <option value="USD">USD ($)</option>
                     <option value="LKR">LKR (Rs)</option>
+                    <option value="USD">USD ($)</option>
                     <option value="INR">INR (₹)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
                 </select>
-                <div class="flex gap-2">
-                    <input type="file" id="import-input" class="hidden" accept=".json" onchange="importData(event)">
-                    <button onclick="document.getElementById('import-input').click()" title="Upload Backup">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                    </button>
-                    <button onclick="exportData()" title="Download Backup">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                    </button>
-                </div>
+                <button onclick="logout()" title="Logout" class="p-1 hover:bg-blue-500 rounded transition-colors text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </div>
         </div>
     </header>
 
+    <!-- Admin Tools Section -->
+    <div id="admin-tools" class="hidden bg-yellow-50 p-4 border-b border-yellow-200">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-black text-yellow-700 uppercase">User Directory</h3>
+            <button onclick="window.location.reload()" class="text-[10px] bg-yellow-200 px-2 py-1 rounded text-yellow-800 font-bold">Refresh List</button>
+        </div>
+        <div id="admin-user-list" class="space-y-2 max-h-48 overflow-y-auto">
+            <p class="text-xs text-gray-400 italic">Fetching users...</p>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main id="app-content" class="flex-1 p-4 mb-20 overflow-y-auto">
-        <!-- Initial Skeleton Dashboard -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 animate-pulse">
-                <div class="h-2 w-16 bg-gray-200 rounded mb-2"></div>
-                <div class="h-6 w-24 bg-gray-300 rounded"></div>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 animate-pulse">
-                <div class="h-2 w-16 bg-gray-200 rounded mb-2"></div>
-                <div class="h-6 w-24 bg-gray-300 rounded"></div>
-            </div>
+        <div class="animate-pulse space-y-4">
+            <div class="h-24 bg-gray-100 rounded-xl"></div>
+            <div class="h-24 bg-gray-100 rounded-xl"></div>
         </div>
-        <p class="text-center text-xs text-gray-400">Connecting to secure storage...</p>
     </main>
+
+    <!-- Hidden File Input for Upload -->
+    <input type="file" id="import-file" class="hidden" accept=".json" onchange="handleFileImport(event)">
 
     <!-- Navigation -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex justify-around p-3 z-50">
@@ -98,90 +116,211 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const currencySymbols = { USD: '$', LKR: 'Rs', INR: '₹', EUR: '€', GBP: '£' };
+        const currencySymbols = { LKR: 'Rs', USD: '$', INR: '₹', EUR: '€', GBP: '£' };
 
         window.state = {
             sales: [],
             customers: [],
             inventory: [],
-            settings: { currency: 'USD' },
+            settings: { currency: 'LKR' },
             currentView: 'dashboard',
-            user: null
+            user: null,
+            profile: null,
+            isAdmin: false,
+            adminTargetUid: null
         };
 
         let db, auth, appId;
 
         const initApp = async () => {
-            try {
-                // Show immediate shell
-                refreshUI();
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'shop-book-v2';
 
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'shop-book-pro';
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    showAuthScreen();
+                    return;
+                }
+                
+                window.state.user = user;
+                
+                // If the user already has admin session flag in state or localStorage
+                if (window.state.isAdmin) {
+                    await loadAdminView();
+                    return;
+                }
 
-                onAuthStateChanged(auth, (user) => {
-                    window.state.user = user;
-                    const statusEl = document.getElementById('auth-status');
-                    if (user) {
-                        if (statusEl) statusEl.innerText = `Online: ${user.uid.substring(0,6)}`;
-                        setupListeners(user.uid);
-                    }
-                });
+                // Normal User Path
+                const profileDoc = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'));
+                if (profileDoc.exists()) {
+                    window.state.profile = profileDoc.data();
+                    document.getElementById('auth-overlay').classList.add('hidden');
+                    setupListeners(user.uid);
+                } else {
+                    // This handles cases where auth is active but profile is missing
+                    showAuthScreen();
+                }
+            });
 
-                // Robust Auth with Exponential Backoff
-                const performAuth = async (retries = 0) => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) {
-                        if (retries < 3) {
-                            setTimeout(() => performAuth(retries + 1), Math.pow(2, retries) * 1000);
-                        } else {
-                            document.getElementById('auth-status').innerText = "Auth Error - Offline";
-                        }
-                    }
-                };
-
-                performAuth();
-            } catch (err) {
-                console.error("Critical Init Error:", err);
-                refreshUI(); // Fallback to local UI
+            const session = localStorage.getItem('sb_session');
+            if (session) {
+                const { userIn, passIn } = JSON.parse(session);
+                if (userIn === '9332' && passIn === '9332#') {
+                    window.state.isAdmin = true;
+                }
+                autoPerformAuth();
+            } else {
+                showAuthScreen();
             }
         };
 
+        const autoPerformAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+
+        function showAuthScreen() {
+            document.getElementById('auth-overlay').classList.remove('hidden');
+        }
+
+        window.handleAuth = async () => {
+            const userIn = document.getElementById('auth-username').value.trim();
+            const passIn = document.getElementById('auth-password').value.trim();
+            const errorEl = document.getElementById('auth-error');
+
+            if (!userIn || !passIn) {
+                errorEl.innerText = "Nickname and Password are required.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // ADMIN LOGIN CHECK
+            if (userIn === '9332' && passIn === '9332#') {
+                window.state.isAdmin = true;
+                localStorage.setItem('sb_session', JSON.stringify({userIn, passIn}));
+                await autoPerformAuth();
+                document.getElementById('auth-overlay').classList.add('hidden');
+                // loadAdminView will be triggered by onAuthStateChanged
+                return;
+            }
+
+            // USER LOGIN/SIGNUP
+            await autoPerformAuth();
+            const uid = auth.currentUser.uid;
+            const profRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
+            const snap = await getDoc(profRef);
+
+            if (snap.exists()) {
+                const data = snap.data();
+                if (data.password === passIn) {
+                    window.state.profile = data;
+                    localStorage.setItem('sb_session', JSON.stringify({userIn, passIn}));
+                    document.getElementById('auth-overlay').classList.add('hidden');
+                    setupListeners(uid);
+                } else {
+                    errorEl.innerText = "Wrong password for this nickname.";
+                    errorEl.classList.remove('hidden');
+                }
+            } else {
+                const newProfile = { nickname: userIn.substring(0, 10), password: passIn, createdAt: new Date().toISOString() };
+                await setDoc(profRef, newProfile);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registry', uid), { nickname: userIn, uid: uid });
+                
+                window.state.profile = newProfile;
+                localStorage.setItem('sb_session', JSON.stringify({userIn, passIn}));
+                document.getElementById('auth-overlay').classList.add('hidden');
+                setupListeners(uid);
+            }
+        };
+
+        window.logout = async () => {
+            localStorage.removeItem('sb_session');
+            await signOut(auth);
+            window.location.reload();
+        };
+
+        async function loadAdminView() {
+            // Visual indicators for Admin
+            document.getElementById('admin-tools').classList.remove('hidden');
+            document.getElementById('admin-badge').classList.remove('hidden');
+            document.getElementById('app-header').classList.replace('bg-blue-600', 'bg-gray-800');
+            document.getElementById('auth-status').innerText = "SYSTEM ADMINISTRATOR";
+
+            try {
+                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'registry'));
+                const listEl = document.getElementById('admin-user-list');
+                
+                if (snap.empty) {
+                    listEl.innerHTML = `<p class="text-xs text-gray-500 py-4">No users registered yet.</p>`;
+                } else {
+                    listEl.innerHTML = snap.docs.map(d => {
+                        const u = d.data();
+                        const isCurrent = window.state.adminTargetUid === u.uid;
+                        return `<div class="flex justify-between items-center bg-white p-2 rounded shadow-sm text-xs border ${isCurrent ? 'border-yellow-500 ring-1 ring-yellow-400' : ''}">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-800">${u.nickname}</span>
+                                <span class="text-[9px] text-gray-400 font-mono">${u.uid.substring(0, 8)}...</span>
+                            </div>
+                            <button onclick="adminInspect('${u.uid}')" class="${isCurrent ? 'bg-yellow-500' : 'bg-blue-600'} text-white px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition-all">
+                                ${isCurrent ? 'Inspecting' : 'Inspect'}
+                            </button>
+                        </div>`;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error("Admin fetch error:", err);
+            }
+            refreshUI();
+        }
+
+        window.adminInspect = (uid) => {
+            window.state.adminTargetUid = uid;
+            setupListeners(uid);
+            loadAdminView(); // Refresh list to show highlight
+        };
+
         function setupListeners(uid) {
+            const statusEl = document.getElementById('auth-status');
+            if (window.state.isAdmin) {
+                statusEl.innerText = `ADMIN: Viewing User ID ${uid.substring(0,8)}`;
+            } else {
+                statusEl.innerText = `Hello, ${window.state.profile?.nickname || 'User'}`;
+            }
+
+            // Sync Currency
             onSnapshot(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), (snapshot) => {
                 if (snapshot.exists()) {
                     window.state.settings = snapshot.data();
                     const select = document.getElementById('currency-select');
-                    if (select) select.value = window.state.settings.currency || 'USD';
+                    if (select) select.value = window.state.settings.currency || 'LKR';
                 }
                 refreshUI();
-            }, (err) => console.warn("Snapshot error:", err));
+            }, (err) => console.log("Prefs Listen Error:", err));
 
+            // Sync Collections
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'sales'), (snap) => {
                 window.state.sales = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 refreshUI();
-            }, (err) => console.warn("Snapshot error:", err));
+            }, (err) => console.log("Sales Listen Error:", err));
 
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'customers'), (snap) => {
                 window.state.customers = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 refreshUI();
-            }, (err) => console.warn("Snapshot error:", err));
+            }, (err) => console.log("Customers Listen Error:", err));
 
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), (snap) => {
                 window.state.inventory = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 refreshUI();
-            }, (err) => console.warn("Snapshot error:", err));
+            }, (err) => console.log("Inventory Listen Error:", err));
         }
 
         window.switchView = (view) => {
@@ -189,15 +328,16 @@
             refreshUI();
         };
 
+        const getActiveUid = () => window.state.adminTargetUid || window.state.user?.uid;
+
         window.updateCurrency = async () => {
             const select = document.getElementById('currency-select');
             const val = select.value;
             window.state.settings.currency = val;
             refreshUI();
-            if (window.state.user) {
-                try {
-                    await setDoc(doc(db, 'artifacts', appId, 'users', window.state.user.uid, 'settings', 'prefs'), { currency: val });
-                } catch(e) {}
+            const uid = getActiveUid();
+            if (uid) {
+                await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), { currency: val });
             }
         };
 
@@ -206,7 +346,7 @@
             const title = document.getElementById('view-title');
             if (!container || !title) return;
 
-            const symbol = currencySymbols[window.state.settings.currency] || '$';
+            const symbol = currencySymbols[window.state.settings.currency] || 'Rs';
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const isActive = btn.dataset.view === window.state.currentView;
@@ -224,35 +364,49 @@
 
                 container.innerHTML = `
                     <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
                             <p class="text-[10px] text-blue-600 font-bold uppercase">Today's Sales</p>
-                            <p class="text-xl font-black text-blue-900">${symbol}${todaySales.toLocaleString()}</p>
+                            <p class="text-xl font-black text-blue-900">${symbol} ${todaySales.toLocaleString()}</p>
                         </div>
-                        <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                        <div class="bg-red-50 p-4 rounded-xl border border-red-100 shadow-sm">
                             <p class="text-[10px] text-red-600 font-bold uppercase">Total Debt</p>
-                            <p class="text-xl font-black text-red-900">${symbol}${totalCredit.toLocaleString()}</p>
+                            <p class="text-xl font-black text-red-900">${symbol} ${totalCredit.toLocaleString()}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-6">
-                        <button onclick="openModal('addSale')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50">
+                        <button onclick="openModal('addSale')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50 transition-all">
                             <div class="text-green-500 mb-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"/></svg></div>
                             <span class="text-[9px] font-bold">New Sale</span>
                         </button>
-                        <button onclick="openModal('addCustomer')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50">
+                        <button onclick="openModal('addCustomer')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50 transition-all">
                             <div class="text-blue-500 mb-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></div>
                             <span class="text-[9px] font-bold">Customer</span>
                         </button>
-                        <button onclick="openModal('addStock')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50">
+                        <button onclick="openModal('addStock')" class="bg-white border p-3 rounded-lg flex flex-col items-center shadow-sm active:bg-gray-50 transition-all">
                             <div class="text-purple-500 mb-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
                             <span class="text-[9px] font-bold">Stock</span>
                         </button>
                     </div>
-                    <h3 class="font-bold text-sm text-gray-500 mb-2">Recent Sales</h3>
+                    <div class="flex justify-between items-center mb-2 bg-white p-3 border rounded-xl shadow-sm">
+                         <div>
+                            <h3 class="font-bold text-sm text-gray-800">Backup & Restore</h3>
+                            <p class="text-[9px] text-gray-400">Save or upload your ledger data</p>
+                         </div>
+                         <div class="flex gap-2">
+                             <button onclick="triggerImport()" class="bg-gray-100 hover:bg-gray-200 text-[10px] text-gray-700 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Upload
+                             </button>
+                             <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 text-[10px] text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download
+                             </button>
+                         </div>
+                    </div>
+                    <h3 class="font-bold text-sm text-gray-500 mt-6 mb-2">Recent Sales</h3>
                     <div class="space-y-2">
                         ${window.state.sales.slice(-5).reverse().map(s => `
                             <div class="flex justify-between p-3 bg-white border rounded-lg shadow-sm">
                                 <div><p class="text-sm font-bold">${s.item}</p><p class="text-[10px] text-gray-400">${new Date(s.date).toLocaleTimeString()}</p></div>
-                                <p class="font-bold text-green-600">${symbol}${parseFloat(s.amount).toFixed(2)}</p>
+                                <p class="font-bold text-green-600">${symbol} ${parseFloat(s.amount).toFixed(2)}</p>
                             </div>
                         `).join('') || '<p class="text-center text-xs text-gray-400 py-6">No sales recorded yet</p>'}
                     </div>
@@ -261,10 +415,10 @@
                 title.innerText = "Sales History";
                 container.innerHTML = `<div class="space-y-2">${window.state.sales.slice().reverse().map(s => `
                     <div class="flex justify-between items-center p-4 bg-white border rounded-xl shadow-sm">
-                        <div><p class="font-bold">${s.item}</p><p class="text-xs text-gray-400">${new Date(s.date).toLocaleDateString()}</p></div>
+                        <div><p class="font-bold text-gray-800">${s.item}</p><p class="text-xs text-gray-400">${new Date(s.date).toLocaleDateString()} at ${new Date(s.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div>
                         <div class="text-right">
-                            <p class="font-bold text-blue-600">${symbol}${parseFloat(s.amount).toFixed(2)}</p>
-                            <button onclick="deleteDocHandler('sales', '${s.id}')" class="text-[10px] text-red-400 uppercase font-bold">Delete</button>
+                            <p class="font-bold text-blue-600">${symbol} ${parseFloat(s.amount).toFixed(2)}</p>
+                            <button onclick="deleteDocHandler('sales', '${s.id}')" class="text-[10px] text-red-400 uppercase font-bold hover:text-red-600 transition-colors">Delete</button>
                         </div>
                     </div>
                 `).join('') || '<p class="text-center text-gray-400 py-10">No records found</p>'}</div>`;
@@ -272,12 +426,13 @@
                 title.innerText = "Credit Ledger";
                 container.innerHTML = `<div class="space-y-2">${window.state.customers.map(c => `
                     <div class="flex justify-between items-center p-4 bg-white border rounded-xl shadow-sm">
-                        <div><p class="font-bold">${c.name}</p><p class="text-xs text-gray-400">${c.phone || ''}</p></div>
+                        <div><p class="font-bold text-gray-800">${c.name}</p><p class="text-xs text-gray-400">${c.phone || 'No phone'}</p></div>
                         <div class="text-right">
-                            <p class="font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-600'}">${symbol}${Math.abs(c.balance).toFixed(2)}</p>
-                            <div class="flex gap-1 mt-1">
-                                <button onclick="adjustBalance('${c.id}', ${c.balance}, -1)" class="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] rounded border">Paid</button>
-                                <button onclick="adjustBalance('${c.id}', ${c.balance}, 1)" class="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] rounded border">Debt</button>
+                            <p class="font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-600'}">${symbol} ${Math.abs(c.balance).toFixed(2)}</p>
+                            <div class="flex gap-1 mt-1 justify-end">
+                                <button onclick="adjustBalance('${c.id}', ${c.balance}, -1)" class="px-2 py-1 bg-green-50 text-green-600 text-[10px] rounded-md border border-green-200 font-bold hover:bg-green-100 transition-colors">Paid</button>
+                                <button onclick="adjustBalance('${c.id}', ${c.balance}, 1)" class="px-2 py-1 bg-red-50 text-red-600 text-[10px] rounded-md border border-red-200 font-bold hover:bg-red-100 transition-colors">Debt</button>
+                                <button onclick="deleteDocHandler('customers', '${c.id}')" class="px-2 py-1 bg-gray-50 text-gray-400 text-[10px] rounded-md border font-bold hover:bg-gray-100">×</button>
                             </div>
                         </div>
                     </div>
@@ -286,11 +441,19 @@
                 title.innerText = "Stock Inventory";
                 container.innerHTML = `<div class="space-y-2">${window.state.inventory.map(i => `
                     <div class="flex justify-between items-center p-4 bg-white border rounded-xl shadow-sm">
-                        <div><p class="font-bold">${i.name}</p><p class="text-xs text-gray-400">Price: ${symbol}${i.price}</p></div>
+                        <div>
+                            <p class="font-bold text-gray-800">${i.name}</p>
+                            <p class="text-xs text-gray-400">Price: ${symbol} ${i.price}</p>
+                        </div>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustStock('${i.id}', ${i.qty}, -1)" class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">-</button>
-                            <span class="font-bold w-6 text-center ${i.qty < 5 ? 'text-red-500' : ''}">${i.qty}</span>
-                            <button onclick="adjustStock('${i.id}', ${i.qty}, 1)" class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">+</button>
+                            <div class="flex items-center bg-gray-50 rounded-lg p-1 border">
+                                <button onclick="adjustStock('${i.id}', ${i.qty}, -1)" class="w-8 h-8 hover:bg-white rounded flex items-center justify-center font-bold text-gray-600 transition-colors">-</button>
+                                <span class="font-bold w-10 text-center ${i.qty < 5 ? 'text-red-500 animate-pulse' : 'text-gray-800'}">${i.qty}</span>
+                                <button onclick="adjustStock('${i.id}', ${i.qty}, 1)" class="w-8 h-8 hover:bg-white rounded flex items-center justify-center font-bold text-gray-600 transition-colors">+</button>
+                            </div>
+                            <button onclick="deleteDocHandler('inventory', '${i.id}')" class="text-gray-300 hover:text-red-500 transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
+                            </button>
                         </div>
                     </div>
                 `).join('') || '<p class="text-center text-gray-400 py-10">No stock items</p>'}</div>`;
@@ -303,11 +466,11 @@
             if (!overlay || !content) return;
             overlay.classList.remove('hidden');
             if(type === 'addSale') {
-                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Sale</h2><input id="m-item" placeholder="Item Name" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-amt" type="number" placeholder="Amount" class="w-full border p-2 mb-4 rounded focus:ring-2 focus:ring-blue-500 outline-none"><button onclick="saveNewSale()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Add Sale</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
+                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Sale</h2><input id="m-item" placeholder="Item Name" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-amt" type="number" placeholder="Amount" class="w-full border p-2 mb-4 rounded outline-none focus:border-blue-500"><button onclick="saveNewSale()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">Add Sale</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
             } else if(type === 'addCustomer') {
-                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Customer</h2><input id="m-name" placeholder="Full Name" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-bal" type="number" placeholder="Initial Debt" class="w-full border p-2 mb-4 rounded focus:ring-2 focus:ring-blue-500 outline-none"><button onclick="saveNewCustomer()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Save Customer</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
+                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Customer</h2><input id="m-name" placeholder="Full Name" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-bal" type="number" placeholder="Initial Debt (Optional)" class="w-full border p-2 mb-4 rounded outline-none focus:border-blue-500"><button onclick="saveNewCustomer()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">Save Customer</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
             } else if(type === 'addStock') {
-                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">Add Stock</h2><input id="m-pname" placeholder="Item Name" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-price" type="number" placeholder="Selling Price" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-qty" type="number" placeholder="Initial Quantity" class="w-full border p-2 mb-4 rounded focus:ring-2 focus:ring-blue-500 outline-none"><button onclick="saveNewStock()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Add to Inventory</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
+                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">Add Stock</h2><input id="m-pname" placeholder="Item Name" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-price" type="number" placeholder="Selling Price" class="w-full border p-2 mb-2 rounded outline-none focus:border-blue-500"><input id="m-qty" type="number" placeholder="Initial Quantity" class="w-full border p-2 mb-4 rounded outline-none focus:border-blue-500"><button onclick="saveNewStock()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-lg active:scale-95 transition-all">Add to Inventory</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
             }
         };
 
@@ -316,16 +479,18 @@
         window.saveNewSale = async () => {
             const item = document.getElementById('m-item').value;
             const amount = document.getElementById('m-amt').value;
-            if(!item || !amount || !window.state.user) return;
-            await addDoc(collection(db, 'artifacts', appId, 'users', window.state.user.uid, 'sales'), { item, amount: parseFloat(amount), date: new Date().toISOString() });
+            const uid = getActiveUid();
+            if(!item || !amount || !uid) return;
+            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'sales'), { item, amount: parseFloat(amount), date: new Date().toISOString() });
             closeModal();
         };
 
         window.saveNewCustomer = async () => {
             const name = document.getElementById('m-name').value;
             const balance = document.getElementById('m-bal').value || 0;
-            if(!name || !window.state.user) return;
-            await addDoc(collection(db, 'artifacts', appId, 'users', window.state.user.uid, 'customers'), { name, balance: parseFloat(balance), phone: '' });
+            const uid = getActiveUid();
+            if(!name || !uid) return;
+            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'customers'), { name, balance: parseFloat(balance), phone: '' });
             closeModal();
         };
 
@@ -333,25 +498,29 @@
             const name = document.getElementById('m-pname').value;
             const price = document.getElementById('m-price').value;
             const qty = document.getElementById('m-qty').value || 0;
-            if(!name || !window.state.user) return;
-            await addDoc(collection(db, 'artifacts', appId, 'users', window.state.user.uid, 'inventory'), { name, price: parseFloat(price), qty: parseInt(qty) });
+            const uid = getActiveUid();
+            if(!name || !uid) return;
+            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), { name, price: parseFloat(price), qty: parseInt(qty) });
             closeModal();
         };
 
         window.adjustBalance = async (id, current, mult) => {
             const amt = prompt("Amount:");
-            if(!amt || isNaN(amt) || !window.state.user) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'users', window.state.user.uid, 'customers', id), { balance: current + (parseFloat(amt) * mult) });
+            const uid = getActiveUid();
+            if(!amt || isNaN(amt) || !uid) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'users', uid, 'customers', id), { balance: current + (parseFloat(amt) * mult) });
         };
 
         window.adjustStock = async (id, current, change) => {
-            if(!window.state.user) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'users', window.state.user.uid, 'inventory', id), { qty: Math.max(0, current + change) });
+            const uid = getActiveUid();
+            if(!uid) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', id), { qty: Math.max(0, current + change) });
         };
 
         window.deleteDocHandler = async (coll, id) => {
-            if(confirm("Permanently delete?") && window.state.user) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', window.state.user.uid, coll, id));
+            const uid = getActiveUid();
+            if(confirm("Permanently delete?") && uid) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, coll, id));
             }
         };
 
@@ -361,31 +530,44 @@
                 customers: window.state.customers,
                 inventory: window.state.inventory,
                 settings: window.state.settings,
-                exportedAt: new Date().toISOString()
+                exportedAt: new Date().toISOString(),
+                nickname: window.state.profile?.nickname || 'unknown'
             };
+            const name = window.state.profile?.nickname || 'admin_export';
             const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `shop_book_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `backup_${name}_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
         };
 
-        window.importData = (event) => {
+        window.triggerImport = () => {
+            document.getElementById('import-file').click();
+        };
+
+        window.handleFileImport = (event) => {
             const file = event.target.files[0];
-            if (!file || !window.state.user) return;
+            if (!file) return;
+
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const imported = JSON.parse(e.target.result);
-                    if (!confirm("Import and merge data?")) return;
-                    const uid = window.state.user.uid;
-                    if (imported.settings) await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), imported.settings);
-                    for (const s of (imported.sales || [])) { const {id, ...data} = s; await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'sales'), data); }
-                    for (const c of (imported.customers || [])) { const {id, ...data} = c; await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'customers'), data); }
-                    for (const i of (imported.inventory || [])) { const {id, ...data} = i; await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), data); }
-                    alert("Data Restored!");
-                    window.location.reload();
-                } catch (err) { alert("Invalid File"); }
+                    const data = JSON.parse(e.target.result);
+                    const uid = getActiveUid();
+                    if (!uid) throw new Error("User not authenticated");
+
+                    if (confirm("This will merge imported data with existing records. Continue?")) {
+                        const batch = writeBatch(db);
+                        if (data.sales) data.sales.forEach(s => batch.set(doc(collection(db, 'artifacts', appId, 'users', uid, 'sales')), { item: s.item, amount: s.amount, date: s.date }));
+                        if (data.customers) data.customers.forEach(c => batch.set(doc(collection(db, 'artifacts', appId, 'users', uid, 'customers')), { name: c.name, balance: c.balance, phone: c.phone || '' }));
+                        if (data.inventory) data.inventory.forEach(i => batch.set(doc(collection(db, 'artifacts', appId, 'users', uid, 'inventory')), { name: i.name, price: i.price, qty: i.qty }));
+                        await batch.commit();
+                        alert("Data imported successfully!");
+                        window.location.reload();
+                    }
+                } catch (err) {
+                    alert("Failed to import: " + err.message);
+                }
             };
             reader.readAsText(file);
         };
