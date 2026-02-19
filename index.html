@@ -10,6 +10,15 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .nav-active { color: #2563eb; }
         .nav-inactive { color: #9ca3af; }
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
 <body class="max-w-md mx-auto bg-white min-h-screen flex flex-col relative shadow-2xl">
@@ -19,7 +28,7 @@
         <div class="flex justify-between items-center">
             <div>
                 <h1 id="view-title" class="text-xl font-bold">Shop Book</h1>
-                <p id="auth-status" class="text-[10px] opacity-80">Connecting...</p>
+                <p id="auth-status" class="text-[10px] opacity-80">Offline Mode</p>
             </div>
             <div class="flex items-center gap-3">
                 <select id="currency-select" onchange="updateCurrency()" class="bg-blue-700 text-xs rounded px-2 py-1 border-none outline-none">
@@ -30,7 +39,6 @@
                     <option value="GBP">GBP (£)</option>
                 </select>
                 <div class="flex gap-2">
-                    <!-- Hidden Upload Input -->
                     <input type="file" id="import-input" class="hidden" accept=".json" onchange="importData(event)">
                     <button onclick="document.getElementById('import-input').click()" title="Upload Backup">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,26 +57,35 @@
 
     <!-- Main Content -->
     <main id="app-content" class="flex-1 p-4 mb-20 overflow-y-auto">
-        <div class="flex items-center justify-center h-full">
-            <p class="text-gray-500 italic">Initializing secure storage...</p>
+        <!-- Initial Skeleton Dashboard -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 animate-pulse">
+                <div class="h-2 w-16 bg-gray-200 rounded mb-2"></div>
+                <div class="h-6 w-24 bg-gray-300 rounded"></div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 animate-pulse">
+                <div class="h-2 w-16 bg-gray-200 rounded mb-2"></div>
+                <div class="h-6 w-24 bg-gray-300 rounded"></div>
+            </div>
         </div>
+        <p class="text-center text-xs text-gray-400">Connecting to secure storage...</p>
     </main>
 
     <!-- Navigation -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex justify-around p-3 z-50">
-        <button onclick="switchView('dashboard')" class="nav-btn flex flex-col items-center" data-view="dashboard">
+        <button onclick="switchView('dashboard')" class="nav-btn flex flex-col items-center nav-active" data-view="dashboard">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
             <span class="text-[10px]">Home</span>
         </button>
-        <button onclick="switchView('sales')" class="nav-btn flex flex-col items-center" data-view="sales">
+        <button onclick="switchView('sales')" class="nav-btn flex flex-col items-center nav-inactive" data-view="sales">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z" /></svg>
             <span class="text-[10px]">Sales</span>
         </button>
-        <button onclick="switchView('customers')" class="nav-btn flex flex-col items-center" data-view="customers">
+        <button onclick="switchView('customers')" class="nav-btn flex flex-col items-center nav-inactive" data-view="customers">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z" /></svg>
             <span class="text-[10px]">Credit</span>
         </button>
-        <button onclick="switchView('inventory')" class="nav-btn flex flex-col items-center" data-view="inventory">
+        <button onclick="switchView('inventory')" class="nav-btn flex flex-col items-center nav-inactive" data-view="inventory">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
             <span class="text-[10px]">Stock</span>
         </button>
@@ -99,6 +116,9 @@
 
         const initApp = async () => {
             try {
+                // Show immediate shell
+                refreshUI();
+
                 const firebaseConfig = JSON.parse(__firebase_config);
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -109,18 +129,32 @@
                     window.state.user = user;
                     const statusEl = document.getElementById('auth-status');
                     if (user) {
-                        if (statusEl) statusEl.innerText = `Syncing: ${user.uid.substring(0,8)}...`;
+                        if (statusEl) statusEl.innerText = `Online: ${user.uid.substring(0,6)}`;
                         setupListeners(user.uid);
                     }
                 });
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Robust Auth with Exponential Backoff
+                const performAuth = async (retries = 0) => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        if (retries < 3) {
+                            setTimeout(() => performAuth(retries + 1), Math.pow(2, retries) * 1000);
+                        } else {
+                            document.getElementById('auth-status').innerText = "Auth Error - Offline";
+                        }
+                    }
+                };
+
+                performAuth();
             } catch (err) {
-                console.error("Initialization error:", err);
+                console.error("Critical Init Error:", err);
+                refreshUI(); // Fallback to local UI
             }
         };
 
@@ -132,22 +166,22 @@
                     if (select) select.value = window.state.settings.currency || 'USD';
                 }
                 refreshUI();
-            });
+            }, (err) => console.warn("Snapshot error:", err));
 
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'sales'), (snap) => {
                 window.state.sales = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 refreshUI();
-            });
+            }, (err) => console.warn("Snapshot error:", err));
 
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'customers'), (snap) => {
                 window.state.customers = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 refreshUI();
-            });
+            }, (err) => console.warn("Snapshot error:", err));
 
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), (snap) => {
                 window.state.inventory = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 refreshUI();
-            });
+            }, (err) => console.warn("Snapshot error:", err));
         }
 
         window.switchView = (view) => {
@@ -159,10 +193,12 @@
             const select = document.getElementById('currency-select');
             const val = select.value;
             window.state.settings.currency = val;
-            if (window.state.user) {
-                await setDoc(doc(db, 'artifacts', appId, 'users', window.state.user.uid, 'settings', 'prefs'), { currency: val });
-            }
             refreshUI();
+            if (window.state.user) {
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'users', window.state.user.uid, 'settings', 'prefs'), { currency: val });
+                } catch(e) {}
+            }
         };
 
         function refreshUI() {
@@ -174,7 +210,8 @@
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const isActive = btn.dataset.view === window.state.currentView;
-                btn.className = `nav-btn flex flex-col items-center ${isActive ? 'nav-active' : 'nav-inactive'}`;
+                btn.classList.toggle('nav-active', isActive);
+                btn.classList.toggle('nav-inactive', !isActive);
             });
 
             if (window.state.currentView === 'dashboard') {
@@ -217,7 +254,7 @@
                                 <div><p class="text-sm font-bold">${s.item}</p><p class="text-[10px] text-gray-400">${new Date(s.date).toLocaleTimeString()}</p></div>
                                 <p class="font-bold text-green-600">${symbol}${parseFloat(s.amount).toFixed(2)}</p>
                             </div>
-                        `).join('') || '<p class="text-center text-xs text-gray-400 py-6">No sales today</p>'}
+                        `).join('') || '<p class="text-center text-xs text-gray-400 py-6">No sales recorded yet</p>'}
                     </div>
                 `;
             } else if (window.state.currentView === 'sales') {
@@ -266,11 +303,11 @@
             if (!overlay || !content) return;
             overlay.classList.remove('hidden');
             if(type === 'addSale') {
-                content.innerHTML = `<h2 class="font-bold mb-4">New Sale</h2><input id="m-item" placeholder="Item Name" class="w-full border p-2 mb-2 rounded"><input id="m-amt" type="number" placeholder="Amount" class="w-full border p-2 mb-4 rounded"><button onclick="saveNewSale()" class="w-full bg-blue-600 text-white p-2 rounded">Add Sale</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400">Cancel</button>`;
+                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Sale</h2><input id="m-item" placeholder="Item Name" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-amt" type="number" placeholder="Amount" class="w-full border p-2 mb-4 rounded focus:ring-2 focus:ring-blue-500 outline-none"><button onclick="saveNewSale()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Add Sale</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
             } else if(type === 'addCustomer') {
-                content.innerHTML = `<h2 class="font-bold mb-4">New Customer</h2><input id="m-name" placeholder="Full Name" class="w-full border p-2 mb-2 rounded"><input id="m-bal" type="number" placeholder="Initial Debt" class="w-full border p-2 mb-4 rounded"><button onclick="saveNewCustomer()" class="w-full bg-blue-600 text-white p-2 rounded">Save Customer</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400">Cancel</button>`;
+                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">New Customer</h2><input id="m-name" placeholder="Full Name" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-bal" type="number" placeholder="Initial Debt" class="w-full border p-2 mb-4 rounded focus:ring-2 focus:ring-blue-500 outline-none"><button onclick="saveNewCustomer()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Save Customer</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
             } else if(type === 'addStock') {
-                content.innerHTML = `<h2 class="font-bold mb-4">Add Stock</h2><input id="m-pname" placeholder="Item Name" class="w-full border p-2 mb-2 rounded"><input id="m-price" type="number" placeholder="Selling Price" class="w-full border p-2 mb-2 rounded"><input id="m-qty" type="number" placeholder="Initial Quantity" class="w-full border p-2 mb-4 rounded"><button onclick="saveNewStock()" class="w-full bg-blue-600 text-white p-2 rounded">Add to Inventory</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400">Cancel</button>`;
+                content.innerHTML = `<h2 class="font-bold mb-4 text-gray-800">Add Stock</h2><input id="m-pname" placeholder="Item Name" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-price" type="number" placeholder="Selling Price" class="w-full border p-2 mb-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"><input id="m-qty" type="number" placeholder="Initial Quantity" class="w-full border p-2 mb-4 rounded focus:ring-2 focus:ring-blue-500 outline-none"><button onclick="saveNewStock()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Add to Inventory</button><button onclick="closeModal()" class="w-full mt-2 text-gray-400 text-sm">Cancel</button>`;
             }
         };
 
@@ -326,61 +363,29 @@
                 settings: window.state.settings,
                 exportedAt: new Date().toISOString()
             };
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
             const a = document.createElement('a');
-            a.href = url; a.download = `shop_book_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.href = URL.createObjectURL(blob);
+            a.download = `shop_book_backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
         };
 
         window.importData = (event) => {
             const file = event.target.files[0];
             if (!file || !window.state.user) return;
-
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (!confirm("This will merge imported data with your current records. Continue?")) return;
-                    
+                    if (!confirm("Import and merge data?")) return;
                     const uid = window.state.user.uid;
-                    
-                    // Restore Settings
-                    if (imported.settings) {
-                        await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), imported.settings);
-                    }
-
-                    // Restore Sales
-                    if (Array.isArray(imported.sales)) {
-                        for (const item of imported.sales) {
-                            const {id, ...data} = item;
-                            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'sales'), data);
-                        }
-                    }
-
-                    // Restore Customers
-                    if (Array.isArray(imported.customers)) {
-                        for (const item of imported.customers) {
-                            const {id, ...data} = item;
-                            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'customers'), data);
-                        }
-                    }
-
-                    // Restore Inventory
-                    if (Array.isArray(imported.inventory)) {
-                        for (const item of imported.inventory) {
-                            const {id, ...data} = item;
-                            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), data);
-                        }
-                    }
-
-                    alert("Backup restored successfully!");
+                    if (imported.settings) await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'prefs'), imported.settings);
+                    for (const s of (imported.sales || [])) { const {id, ...data} = s; await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'sales'), data); }
+                    for (const c of (imported.customers || [])) { const {id, ...data} = c; await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'customers'), data); }
+                    for (const i of (imported.inventory || [])) { const {id, ...data} = i; await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'inventory'), data); }
+                    alert("Data Restored!");
                     window.location.reload();
-                } catch (err) {
-                    console.error("Import failed:", err);
-                    alert("Failed to parse backup file.");
-                }
+                } catch (err) { alert("Invalid File"); }
             };
             reader.readAsText(file);
         };
