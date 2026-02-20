@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocalBiz Books Pro 📒💰📦</title>
+    <title>MyTransactions - Book Keeping 📒💰📦</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; }
         body {
@@ -22,19 +22,22 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
-        /* Login Page */
-        .login-container {
+        /* Auth Pages */
+        .auth-container {
             max-width: 400px;
             margin: 40px auto;
             padding: 32px;
             background: white;
             border-radius: 32px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            text-align: center;
         }
-        .login-container h2 { color: #1a4a5f; margin-bottom: 8px; }
-        .login-sub { color: #64748b; margin-bottom: 24px; font-size: 0.95rem; }
-        .login-input {
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .auth-header h2 { color: #1a4a5f; font-size: 1.8rem; }
+        .auth-header p { color: #64748b; font-size: 0.95rem; }
+        .auth-input {
             width: 100%;
             padding: 16px 18px;
             margin: 8px 0;
@@ -42,14 +45,7 @@
             border-radius: 30px;
             font-size: 1rem;
         }
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 16px 0;
-            justify-content: center;
-        }
-        .login-btn {
+        .auth-btn {
             background: #1a4a5f;
             color: white;
             border: none;
@@ -59,9 +55,33 @@
             font-size: 1.1rem;
             width: 100%;
             cursor: pointer;
-            margin-top: 8px;
+            margin: 16px 0;
         }
-        .demo-hint { font-size: 0.85rem; color: #94a3b8; margin-top: 20px; }
+        .auth-link {
+            color: #1a4a5f;
+            text-decoration: none;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-block;
+            margin: 8px 0;
+        }
+        .auth-divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #94a3b8;
+        }
+        .error-message {
+            color: #b91c1c;
+            font-size: 0.9rem;
+            margin: 8px 0;
+            text-align: center;
+        }
+        .success-message {
+            color: #0f7b4a;
+            font-size: 0.9rem;
+            margin: 8px 0;
+            text-align: center;
+        }
         /* Header */
         .app-header {
             background: linear-gradient(145deg, #0f2b3d, #1a4a5f);
@@ -133,7 +153,7 @@
             gap: 5px;
         }
         .backup-btn:hover { background: #1a4a5f; color: white; }
-        /* Feature Tabs */
+        /* Tabs */
         .feature-tabs {
             display: flex;
             flex-wrap: wrap;
@@ -236,7 +256,7 @@
             align-items: center;
             border: 1px solid #eef2f6;
         }
-        .item-actions { display: flex; gap: 8px; }
+        .item-actions { display: flex; gap: 8px; align-items: center; }
         .delete-btn {
             background: #fee2e2;
             color: #b91c1c;
@@ -288,23 +308,69 @@
             border-radius: 24px;
             text-align: center;
         }
+        .recovery-hint {
+            background: #e9f2f5;
+            padding: 16px;
+            border-radius: 18px;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 <div id="app">
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" style="display: none;">
-        <div class="login-container">
-            <h2>📒💰📦 LocalBiz Books</h2>
-            <div class="login-sub">Sign in to your offline account</div>
-            <input type="email" id="login-email" class="login-input" placeholder="Email (any)" value="demo@shop.com">
-            <input type="password" id="login-password" class="login-input" placeholder="Password (any)" value="password">
-            <div class="checkbox-row">
-                <input type="checkbox" id="remember-me" checked>
-                <label for="remember-me">Remember me (auto-login next time)</label>
+    <!-- AUTH SCREENS -->
+    <div id="auth-screen" style="display: block;">
+        <!-- LOGIN FORM -->
+        <div id="login-form" class="auth-container">
+            <div class="auth-header">
+                <h2>📒💰📦 MyTransactions</h2>
+                <p>Book Keeping App</p>
             </div>
-            <button class="login-btn" id="login-btn">🔓 Login</button>
-            <div class="demo-hint">Use any email & password. Data stays on this device.</div>
+            <input type="email" id="login-email" class="auth-input" placeholder="Email" value="demo@user.com">
+            <input type="password" id="login-password" class="auth-input" placeholder="Password" value="password123">
+            <div id="login-error" class="error-message"></div>
+            <button class="auth-btn" id="login-btn">🔐 Login</button>
+            <div style="text-align: center;">
+                <a class="auth-link" id="show-forgot">🔑 Forgot Password?</a>
+                <span class="auth-divider">•</span>
+                <a class="auth-link" id="show-signup">📝 Create Account</a>
+            </div>
+            <div class="recovery-hint">
+                <strong>Demo:</strong> Use any email with password "password123"<br>
+                Or create a new account
+            </div>
+        </div>
+
+        <!-- SIGNUP FORM -->
+        <div id="signup-form" class="auth-container" style="display: none;">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+                <p>MyTransactions Book Keeping</p>
+            </div>
+            <input type="email" id="signup-email" class="auth-input" placeholder="Email">
+            <input type="password" id="signup-password" class="auth-input" placeholder="Password (min 4 chars)">
+            <input type="password" id="signup-confirm" class="auth-input" placeholder="Confirm Password">
+            <div id="signup-error" class="error-message"></div>
+            <button class="auth-btn" id="signup-btn">📝 Create Account</button>
+            <div style="text-align: center;">
+                <a class="auth-link" id="show-login-from-signup">← Back to Login</a>
+            </div>
+        </div>
+
+        <!-- FORGOT PASSWORD FORM -->
+        <div id="forgot-form" class="auth-container" style="display: none;">
+            <div class="auth-header">
+                <h2>Recover Password</h2>
+                <p>We'll simulate email recovery</p>
+            </div>
+            <input type="email" id="forgot-email" class="auth-input" placeholder="Your Email">
+            <div id="forgot-message" class="success-message"></div>
+            <div id="forgot-error" class="error-message"></div>
+            <button class="auth-btn" id="forgot-btn">📧 Send Recovery</button>
+            <div style="text-align: center;">
+                <a class="auth-link" id="show-login-from-forgot">← Back to Login</a>
+            </div>
         </div>
     </div>
 
@@ -312,23 +378,22 @@
     <div id="main-app" style="display: none;">
         <div class="app-header">
             <div class="header-top">
-                <h1><span>📒💰📦</span> LocalBiz Pro</h1>
+                <h1><span>📒💰📦</span> MyTransactions</h1>
                 <div class="user-welcome">
-                    <span id="welcome-user">👤 Welcome, User</span>
+                    <span id="welcome-user">👤 Welcome</span>
                     <button class="logout-btn" id="logout-btn">🚪 Logout</button>
                 </div>
             </div>
             <div class="date-day" id="current-date-day"></div>
         </div>
 
-        <!-- Backup Bar (visible only after login) -->
+        <!-- Backup Bar -->
         <div class="backup-bar">
             <span>💾 Backup & Restore</span>
             <div class="backup-actions">
-                <button class="backup-btn" id="backup-google-drive">☁️ Backup to Google Drive (simulated)</button>
                 <button class="backup-btn" id="backup-download">⬇️ Download Backup</button>
                 <input type="file" id="restore-file" accept=".json" style="display: none;">
-                <button class="backup-btn" id="backup-upload">⬆️ Restore from Backup</button>
+                <button class="backup-btn" id="backup-upload">⬆️ Restore Backup</button>
             </div>
         </div>
 
@@ -351,7 +416,6 @@
                     <div class="stat-card"><span class="summary-label">Stock Items</span><div class="summary-number" id="home-stock-items">0</div></div>
                     <div class="stat-card"><span class="summary-label">Stock Value</span><div class="summary-number" id="home-stock-value">0</div></div>
                 </div>
-                <p style="color: #64748b; margin-top: 8px;">✨ Your business at a glance. All data offline.</p>
             </div>
         </div>
 
@@ -455,7 +519,7 @@
     <div id="deleteModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom: 16px;">⚠️ Confirm Delete</h3>
-            <p id="delete-message">Are you sure you want to delete this item?</p>
+            <p id="delete-message">Are you sure?</p>
             <div class="modal-actions">
                 <button class="btn-small" id="confirmDelete">Yes, Delete</button>
                 <button class="btn-small btn-secondary" id="cancelDelete">Cancel</button>
@@ -466,77 +530,254 @@
 
 <script>
     (function() {
-        // ---------- STATE ----------
-        let creditData = [];
-        let cashData = [];
-        let stockData = [];
-        let lastInvoice = null;
+        // ---------- USER MANAGEMENT ----------
+        // Users storage: { email: { password, data: { creditData, cashData, stockData, lastInvoice } } }
+        let users = {};
+
+        // Load users from localStorage
+        function loadUsers() {
+            const saved = localStorage.getItem('mytransactions_users');
+            if (saved) {
+                try { users = JSON.parse(saved); } catch { users = {}; }
+            } else {
+                // Create demo user
+                users = {
+                    'demo@user.com': {
+                        password: 'password123',
+                        data: {
+                            creditData: [],
+                            cashData: [],
+                            stockData: [],
+                            lastInvoice: null
+                        }
+                    }
+                };
+                saveUsers();
+            }
+        }
+
+        function saveUsers() {
+            localStorage.setItem('mytransactions_users', JSON.stringify(users));
+        }
+
+        // Current logged in user
         let currentUser = null;
-        let pendingDelete = null; // { type, index }
+        let userData = { creditData: [], cashData: [], stockData: [], lastInvoice: null };
 
-        // ---------- INIT / LOAD FROM STORAGE ----------
-        function loadAllData() {
-            creditData = JSON.parse(localStorage.getItem('creditData')) || [];
-            cashData = JSON.parse(localStorage.getItem('cashData')) || [];
-            stockData = JSON.parse(localStorage.getItem('stockData')) || [];
-            lastInvoice = JSON.parse(localStorage.getItem('lastInvoice')) || null;
-        }
-        function saveAllData() {
-            localStorage.setItem('creditData', JSON.stringify(creditData));
-            localStorage.setItem('cashData', JSON.stringify(cashData));
-            localStorage.setItem('stockData', JSON.stringify(stockData));
-            localStorage.setItem('lastInvoice', JSON.stringify(lastInvoice));
+        // Load user data into memory
+        function loadUserData(email) {
+            if (users[email] && users[email].data) {
+                userData.creditData = users[email].data.creditData || [];
+                userData.cashData = users[email].data.cashData || [];
+                userData.stockData = users[email].data.stockData || [];
+                userData.lastInvoice = users[email].data.lastInvoice || null;
+            } else {
+                // Initialize if missing
+                userData = { creditData: [], cashData: [], stockData: [], lastInvoice: null };
+                if (users[email]) {
+                    users[email].data = userData;
+                    saveUsers();
+                }
+            }
         }
 
-        // ---------- LOGIN SYSTEM ----------
-        const loginScreen = document.getElementById('login-screen');
+        // Save current user's data back to users object
+        function saveCurrentUserData() {
+            if (currentUser && users[currentUser]) {
+                users[currentUser].data = {
+                    creditData: userData.creditData,
+                    cashData: userData.cashData,
+                    stockData: userData.stockData,
+                    lastInvoice: userData.lastInvoice
+                };
+                saveUsers();
+            }
+        }
+
+        // Initialize
+        loadUsers();
+
+        // DOM Elements
+        const authScreen = document.getElementById('auth-screen');
         const mainApp = document.getElementById('main-app');
-        const rememberMeCheck = document.getElementById('remember-me');
-        const loginEmail = document.getElementById('login-email');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const forgotForm = document.getElementById('forgot-form');
         const welcomeSpan = document.getElementById('welcome-user');
 
-        // Check for saved login
-        const savedUser = localStorage.getItem('rememberedUser');
-        if (savedUser) {
-            currentUser = savedUser;
-            loginScreen.style.display = 'none';
+        // Check for remembered user
+        const remembered = localStorage.getItem('mytransactions_remember');
+        if (remembered && users[remembered]) {
+            currentUser = remembered;
+            loadUserData(currentUser);
+            authScreen.style.display = 'none';
             mainApp.style.display = 'block';
-            welcomeSpan.innerText = `👤 Welcome, ${savedUser.split('@')[0]}`;
-            loadAllData();
+            welcomeSpan.innerText = `👤 ${currentUser.split('@')[0]}`;
             updateDateDay();
             renderAll();
         } else {
-            loginScreen.style.display = 'block';
+            authScreen.style.display = 'block';
             mainApp.style.display = 'none';
         }
 
+        // ---------- AUTH NAVIGATION ----------
+        document.getElementById('show-signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            forgotForm.style.display = 'none';
+            clearErrors();
+        });
+
+        document.getElementById('show-forgot').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'none';
+            forgotForm.style.display = 'block';
+            clearErrors();
+        });
+
+        document.getElementById('show-login-from-signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            forgotForm.style.display = 'none';
+            clearErrors();
+        });
+
+        document.getElementById('show-login-from-forgot').addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            clearErrors();
+        });
+
+        function clearErrors() {
+            document.getElementById('login-error').innerText = '';
+            document.getElementById('signup-error').innerText = '';
+            document.getElementById('forgot-error').innerText = '';
+            document.getElementById('forgot-message').innerText = '';
+        }
+
+        // ---------- LOGIN ----------
         document.getElementById('login-btn').addEventListener('click', () => {
-            const email = loginEmail.value.trim() || 'demo@shop.com';
-            const password = document.getElementById('login-password').value; // any password accepted
-            if (!email) { alert('Enter email'); return; }
-            currentUser = email;
-            if (rememberMeCheck.checked) {
-                localStorage.setItem('rememberedUser', email);
-            } else {
-                localStorage.removeItem('rememberedUser');
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            if (!email || !password) {
+                errorEl.innerText = 'Email and password required';
+                return;
             }
-            loginScreen.style.display = 'none';
+
+            if (!users[email]) {
+                errorEl.innerText = 'User not found. Please sign up.';
+                return;
+            }
+
+            if (users[email].password !== password) {
+                errorEl.innerText = 'Incorrect password';
+                return;
+            }
+
+            // Login successful
+            currentUser = email;
+            loadUserData(email);
+            
+            // Handle remember me (always remember for demo simplicity)
+            localStorage.setItem('mytransactions_remember', email);
+
+            authScreen.style.display = 'none';
             mainApp.style.display = 'block';
-            welcomeSpan.innerText = `👤 Welcome, ${email.split('@')[0]}`;
-            loadAllData(); // Load existing data
+            welcomeSpan.innerText = `👤 ${email.split('@')[0]}`;
             updateDateDay();
             renderAll();
         });
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            currentUser = null;
-            localStorage.removeItem('rememberedUser');
-            loginScreen.style.display = 'block';
-            mainApp.style.display = 'none';
-            // Clear sensitive data from memory
-            creditData = []; cashData = []; stockData = []; lastInvoice = null;
+        // ---------- SIGNUP ----------
+        document.getElementById('signup-btn').addEventListener('click', () => {
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const errorEl = document.getElementById('signup-error');
+
+            if (!email || !password || !confirm) {
+                errorEl.innerText = 'All fields required';
+                return;
+            }
+            if (password.length < 4) {
+                errorEl.innerText = 'Password must be at least 4 characters';
+                return;
+            }
+            if (password !== confirm) {
+                errorEl.innerText = 'Passwords do not match';
+                return;
+            }
+            if (users[email]) {
+                errorEl.innerText = 'Email already registered. Please login.';
+                return;
+            }
+
+            // Create new user
+            users[email] = {
+                password: password,
+                data: { creditData: [], cashData: [], stockData: [], lastInvoice: null }
+            };
+            saveUsers();
+
+            // Auto login
+            currentUser = email;
+            loadUserData(email);
+            localStorage.setItem('mytransactions_remember', email);
+
+            authScreen.style.display = 'none';
+            mainApp.style.display = 'block';
+            welcomeSpan.innerText = `👤 ${email.split('@')[0]}`;
+            updateDateDay();
+            renderAll();
         });
 
+        // ---------- FORGOT PASSWORD (SIMULATED) ----------
+        document.getElementById('forgot-btn').addEventListener('click', () => {
+            const email = document.getElementById('forgot-email').value.trim();
+            const messageEl = document.getElementById('forgot-message');
+            const errorEl = document.getElementById('forgot-error');
+
+            if (!email) {
+                errorEl.innerText = 'Email required';
+                messageEl.innerText = '';
+                return;
+            }
+
+            if (!users[email]) {
+                errorEl.innerText = 'Email not registered';
+                messageEl.innerText = '';
+                return;
+            }
+
+            // Simulate sending email
+            messageEl.innerText = `📧 Demo: Password for ${email} is "${users[email].password}" (simulated email)`;
+            errorEl.innerText = '';
+        });
+
+        // ---------- LOGOUT ----------
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            // Save any pending data
+            saveCurrentUserData();
+            
+            currentUser = null;
+            localStorage.removeItem('mytransactions_remember');
+            authScreen.style.display = 'block';
+            mainApp.style.display = 'none';
+            
+            // Reset forms
+            loginForm.style.display = 'block';
+            signupForm.style.display = 'none';
+            forgotForm.style.display = 'none';
+            clearErrors();
+        });
+
+        // ---------- UTILITIES ----------
         function updateDateDay() {
             const now = new Date();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -548,6 +789,7 @@
         const confirmBtn = document.getElementById('confirmDelete');
         const cancelBtn = document.getElementById('cancelDelete');
         const deleteMsg = document.getElementById('delete-message');
+        let pendingDelete = null;
 
         function showDeleteConfirm(type, index, extraMsg = '') {
             pendingDelete = { type, index };
@@ -558,10 +800,11 @@
         confirmBtn.addEventListener('click', () => {
             if (!pendingDelete) return;
             const { type, index } = pendingDelete;
-            if (type === 'credit') creditData.splice(index, 1);
-            else if (type === 'cash') cashData.splice(index, 1);
-            else if (type === 'stock') stockData.splice(index, 1);
-            saveAllData();
+            if (type === 'credit') userData.creditData.splice(index, 1);
+            else if (type === 'cash') userData.cashData.splice(index, 1);
+            else if (type === 'stock') userData.stockData.splice(index, 1);
+            
+            saveCurrentUserData();
             renderAll();
             modal.style.display = 'none';
             pendingDelete = null;
@@ -584,11 +827,10 @@
         }
 
         function renderHome() {
-            // Calculate totals
-            let totalCredit = creditData.reduce((sum, c) => sum + c.amount, 0);
-            let cashBalance = cashData.reduce((sum, c) => sum + (c.type === 'income' ? c.amount : -c.amount), 0);
-            let stockItems = stockData.reduce((sum, s) => sum + s.qty, 0);
-            let stockValue = stockData.reduce((sum, s) => sum + (s.qty * s.price), 0);
+            let totalCredit = userData.creditData.reduce((sum, c) => sum + c.amount, 0);
+            let cashBalance = userData.cashData.reduce((sum, c) => sum + (c.type === 'income' ? c.amount : -c.amount), 0);
+            let stockItems = userData.stockData.reduce((sum, s) => sum + s.qty, 0);
+            let stockValue = userData.stockData.reduce((sum, s) => sum + (s.qty * s.price), 0);
             
             document.getElementById('home-total-credit').innerText = totalCredit;
             document.getElementById('home-cash-balance').innerText = cashBalance;
@@ -601,15 +843,15 @@
             if (!listEl) return;
             let total = 0, collected = 0;
             let html = '';
-            creditData.forEach((c, idx) => {
+            userData.creditData.forEach((c, idx) => {
                 total += c.amount;
                 if (c.collected) collected += c.amount;
                 html += `<div class="list-item">
                     <div><strong>${c.customer}</strong> <span class="badge">${c.note || ''}</span></div>
                     <div class="item-actions">
                         <span>LKR ${c.amount}</span>
-                        <button class="btn-small" onclick="toggleCollected(${idx})">${c.collected ? '✅' : '⭕'}</button>
-                        <button class="delete-btn" onclick="showDeleteConfirm('credit', ${idx})">✖️</button>
+                        <button class="btn-small" onclick="window.toggleCollected(${idx})">${c.collected ? '✅' : '⭕'}</button>
+                        <button class="delete-btn" onclick="window.showDeleteConfirm('credit', ${idx})">✖️</button>
                     </div>
                 </div>`;
             });
@@ -627,16 +869,16 @@
             const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
             let html = '';
-            cashData.slice().reverse().forEach((c, idx) => {
+            userData.cashData.slice().reverse().forEach((c, idx) => {
                 const amt = c.type === 'income' ? c.amount : -c.amount;
                 balance += amt;
                 if (c.timestamp >= startToday) todaySum += amt;
-                const originalIdx = cashData.length - 1 - idx; // for delete
+                const originalIdx = userData.cashData.length - 1 - idx;
                 html += `<div class="list-item">
                     <div><strong>${c.desc}</strong> <span class="badge">${new Date(c.timestamp).toLocaleDateString()}</span></div>
                     <div class="item-actions">
                         <span style="color:${c.type==='income'?'#0f7b4a':'#b91c1c'}">${c.type==='income'?'+':'-'} LKR ${c.amount}</span>
-                        <button class="delete-btn" onclick="showDeleteConfirm('cash', ${originalIdx})">✖️</button>
+                        <button class="delete-btn" onclick="window.showDeleteConfirm('cash', ${originalIdx})">✖️</button>
                     </div>
                 </div>`;
             });
@@ -650,12 +892,12 @@
             if (!listEl) return;
             let totalItems = 0, totalValue = 0;
             let html = '';
-            stockData.forEach((s, idx) => {
+            userData.stockData.forEach((s, idx) => {
                 totalItems += s.qty;
                 totalValue += s.qty * s.price;
                 html += `<div class="list-item">
                     <div><strong>${s.name}</strong> (x${s.qty}) @ LKR ${s.price}</div>
-                    <button class="delete-btn" onclick="showDeleteConfirm('stock', ${idx})">✖️</button>
+                    <button class="delete-btn" onclick="window.showDeleteConfirm('stock', ${idx})">✖️</button>
                 </div>`;
             });
             listEl.innerHTML = html || '<p style="color:#94a3b8;">No stock.</p>';
@@ -665,17 +907,17 @@
 
         function renderInvoicePreview() {
             const preview = document.getElementById('lastInvoicePreview');
-            if (lastInvoice) {
-                preview.innerHTML = `<p><strong>${lastInvoice.customer}</strong> — ${lastInvoice.date}<br>Total: LKR ${lastInvoice.total}</p>`;
+            if (userData.lastInvoice) {
+                preview.innerHTML = `<p><strong>${userData.lastInvoice.customer}</strong> — ${userData.lastInvoice.date}<br>Total: LKR ${userData.lastInvoice.total}</p>`;
             } else {
                 preview.innerHTML = '<p style="color:#64748b;">No invoice yet.</p>';
             }
         }
 
-        // Toggle collected (global)
+        // Global functions for onclick
         window.toggleCollected = (idx) => {
-            creditData[idx].collected = !creditData[idx].collected;
-            saveAllData();
+            userData.creditData[idx].collected = !userData.creditData[idx].collected;
+            saveCurrentUserData();
             renderAll();
         };
         window.showDeleteConfirm = (type, idx) => {
@@ -700,8 +942,8 @@
                 const amt = parseFloat(document.getElementById('credit-amount').value);
                 const note = document.getElementById('credit-note').value.trim();
                 if (!cust || isNaN(amt) || amt <= 0) { alert('Enter valid customer and amount'); return; }
-                creditData.push({ customer: cust, amount: amt, note: note, collected: false, timestamp: Date.now() });
-                saveAllData(); renderAll();
+                userData.creditData.push({ customer: cust, amount: amt, note: note, collected: false, timestamp: Date.now() });
+                saveCurrentUserData(); renderAll();
                 document.getElementById('credit-customer').value = ''; document.getElementById('credit-amount').value = ''; document.getElementById('credit-note').value = '';
             });
 
@@ -711,8 +953,8 @@
                 const amt = parseFloat(document.getElementById('cash-amount').value);
                 const desc = document.getElementById('cash-desc').value.trim();
                 if (isNaN(amt) || amt <= 0 || !desc) { alert('Enter valid amount and description'); return; }
-                cashData.push({ type, amount: amt, desc, timestamp: Date.now() });
-                saveAllData(); renderAll();
+                userData.cashData.push({ type, amount: amt, desc, timestamp: Date.now() });
+                saveCurrentUserData(); renderAll();
                 document.getElementById('cash-amount').value = ''; document.getElementById('cash-desc').value = '';
             });
 
@@ -722,8 +964,8 @@
                 const qty = parseInt(document.getElementById('stock-qty').value);
                 const price = parseFloat(document.getElementById('stock-price').value);
                 if (!name || isNaN(qty) || qty <= 0 || isNaN(price) || price < 0) { alert('Enter valid details'); return; }
-                stockData.push({ name, qty, price });
-                saveAllData(); renderAll();
+                userData.stockData.push({ name, qty, price });
+                saveCurrentUserData(); renderAll();
                 document.getElementById('stock-name').value = ''; document.getElementById('stock-qty').value = ''; document.getElementById('stock-price').value = '';
             });
 
@@ -732,12 +974,12 @@
                 const name = document.getElementById('sell-item-name').value.trim();
                 const qty = parseInt(document.getElementById('sell-qty').value);
                 if (!name || isNaN(qty) || qty <= 0) { alert('Enter item and quantity'); return; }
-                const itemIdx = stockData.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+                const itemIdx = userData.stockData.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
                 if (itemIdx === -1) { alert('Item not found'); return; }
-                if (stockData[itemIdx].qty < qty) { alert('Not enough stock'); return; }
-                stockData[itemIdx].qty -= qty;
-                if (stockData[itemIdx].qty === 0) stockData.splice(itemIdx, 1);
-                saveAllData(); renderAll();
+                if (userData.stockData[itemIdx].qty < qty) { alert('Not enough stock'); return; }
+                userData.stockData[itemIdx].qty -= qty;
+                if (userData.stockData[itemIdx].qty === 0) userData.stockData.splice(itemIdx, 1);
+                saveCurrentUserData(); renderAll();
                 document.getElementById('sell-item-name').value = ''; document.getElementById('sell-qty').value = '';
             });
 
@@ -747,30 +989,29 @@
                 const items = document.getElementById('invoice-items').value.trim() || '—';
                 const total = parseFloat(document.getElementById('invoice-total').value);
                 if (isNaN(total)) { alert('Enter total'); return; }
-                lastInvoice = { customer: cust, items, total, date: new Date().toLocaleDateString() };
-                saveAllData(); renderAll();
+                userData.lastInvoice = { customer: cust, items, total, date: new Date().toLocaleDateString() };
+                saveCurrentUserData(); renderAll();
                 alert('Invoice created!');
             });
 
-            // ---------- BACKUP FUNCTIONS ----------
-            // Download backup
+            // Backup Download
             document.getElementById('backup-download').addEventListener('click', () => {
                 const backup = {
-                    creditData, cashData, stockData, lastInvoice,
-                    backupDate: new Date().toISOString(),
-                    user: currentUser
+                    user: currentUser,
+                    data: userData,
+                    backupDate: new Date().toISOString()
                 };
                 const dataStr = JSON.stringify(backup, null, 2);
                 const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `localbiz-backup-${new Date().toISOString().slice(0,10)}.json`;
+                a.download = `mytransactions-${currentUser?.split('@')[0]}-${new Date().toISOString().slice(0,10)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             });
 
-            // Restore from backup
+            // Restore
             document.getElementById('backup-upload').addEventListener('click', () => {
                 document.getElementById('restore-file').click();
             });
@@ -782,39 +1023,19 @@
                 reader.onload = (ev) => {
                     try {
                         const backup = JSON.parse(ev.target.result);
-                        if (backup.creditData && backup.cashData && backup.stockData) {
-                            creditData = backup.creditData;
-                            cashData = backup.cashData;
-                            stockData = backup.stockData;
-                            lastInvoice = backup.lastInvoice || null;
-                            saveAllData();
+                        if (backup.data && backup.data.creditData !== undefined) {
+                            userData.creditData = backup.data.creditData || [];
+                            userData.cashData = backup.data.cashData || [];
+                            userData.stockData = backup.data.stockData || [];
+                            userData.lastInvoice = backup.data.lastInvoice || null;
+                            saveCurrentUserData();
                             renderAll();
                             alert('Backup restored successfully!');
                         } else { alert('Invalid backup file'); }
                     } catch (err) { alert('Error reading backup'); }
                 };
                 reader.readAsText(file);
-                e.target.value = ''; // reset
-            });
-
-            // Google Drive simulation
-            document.getElementById('backup-google-drive').addEventListener('click', () => {
-                // Simulate Drive backup by downloading a file (since Drive API needs internet & auth)
-                const backup = {
-                    creditData, cashData, stockData, lastInvoice,
-                    backupDate: new Date().toISOString(),
-                    user: currentUser,
-                    note: 'Simulated Google Drive backup (downloaded file)'
-                };
-                const dataStr = JSON.stringify(backup, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `drive-backup-${new Date().toISOString().slice(0,10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                alert('Simulated Google Drive backup: File downloaded. In a real app, this would sync to your Drive.');
+                e.target.value = '';
             });
         });
     })();
